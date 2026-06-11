@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>美区正职工考勤打卡率趋势</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { 
+        font-family: 'Microsoft YaHei', 'SimHei', sans-serif;
+        background: #f5f7fa; 
+        display: flex; 
+        justify-content: center; 
+        align-items: center; 
+        min-height: 100vh;
+        padding: 20px;
+    }
+    .container {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        padding: 30px;
+        width: 100%;
+        max-width: 1000px;
+    }
+    h1 {
+        text-align: center;
+        color: #333;
+        font-size: 20px;
+        margin-bottom: 8px;
+    }
+    .subtitle {
+        text-align: center;
+        color: #888;
+        font-size: 13px;
+        margin-bottom: 25px;
+    }
+    .chart-wrapper {
+        position: relative;
+        height: 450px;
+    }
+    .summary {
+        margin-top: 20px;
+        padding: 15px;
+        background: #f8f9fb;
+        border-radius: 8px;
+        font-size: 13px;
+        color: #666;
+        line-height: 1.8;
+    }
+    .summary strong { color: #333; }
+</style>
+</head>
+<body>
+<div class="container">
+    <h1>美区正职工考勤打卡率趋势（工作日）</h1>
+    <p class="subtitle">数据范围：2026-05-19 至 2026-06-09 | 已跳过周六周日</p>
+    <div class="chart-wrapper">
+        <canvas id="chart"></canvas>
+    </div>
+    <div class="summary">
+        <strong>数据说明：</strong>从各日考勤数据"汇总"Sheet中提取"区域=总计"行的"打卡率"数值。<br>
+        <strong>跳过日期（周末）：</strong>无<br>
+        <strong>有效数据点：</strong>16个工作日
+    </div>
+</div>
+<script>
+const ctx = document.getElementById('chart').getContext('2d');
+new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: ['05/19', '05/20', '05/21', '05/22', '05/25', '05/26', '05/27', '05/28', '05/29', '06/01', '06/02', '06/03', '06/04', '06/05', '06/08', '06/09'],
+        datasets: [{
+            label: '打卡率',
+            data: [0.673315892740353, 0.676547231270358, 0.6685173089484, 0.694619147449336, 0.563038371182459, 0.691542288557214, 0.715198863636364, 0.693214285714286, 0.774305555555556, 0.697772657450077, 0.71273516642547, 0.701923076923077, 0.708096590909091, 0.7473604826546, 0.711760461760462, 0.696858288770054],
+            borderColor: '#1f77b4',
+            backgroundColor: 'rgba(31, 119, 180, 0.1)',
+            borderWidth: 2.5,
+            pointRadius: 6,
+            pointBackgroundColor: '#1f77b4',
+            pointBorderColor: '#fff',
+            pointBorderWidth: 2,
+            pointHoverRadius: 8,
+            tension: 0.3,
+            fill: true
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { display: false },
+            tooltip: {
+                callbacks: {
+                    label: function(ctx) {
+                        return '打卡率: ' + (ctx.parsed.y * 100).toFixed(1) + '%';
+                    }
+                }
+            }
+        },
+        scales: {
+            y: {
+                min: 0.513038371182459,
+                max: 0.8243055555555561,
+                ticks: {
+                    callback: function(v) { return (v * 100).toFixed(1) + '%'; }
+                },
+                grid: { color: '#eee' }
+            },
+            x: {
+                grid: { color: '#eee' }
+            }
+        }
+    }
+});
+</script>
+</body>
+</html>
