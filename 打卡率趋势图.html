@@ -40,6 +40,34 @@
         position: relative;
         height: 450px;
     }
+    .stats-row {
+        display: flex;
+        justify-content: center;
+        gap: 24px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+    }
+    .stat-card {
+        background: linear-gradient(135deg, #f8f9fb 0%, #eef1f5 100%);
+        border-radius: 10px;
+        padding: 12px 20px;
+        text-align: center;
+        min-width: 90px;
+    }
+    .stat-value {
+        font-size: 22px;
+        font-weight: bold;
+        color: #1f77b4;
+    }
+    .stat-label {
+        font-size: 12px;
+        color: #888;
+        margin-top: 2px;
+    }
+    .stat-card.avg .stat-value { color: #e74c3c; }
+    .stat-card.min .stat-value { color: #999; }
+    .stat-card.max .stat-value { color: #27ae60; }
+    .stat-card.med .stat-value { color: #8e44ad; }
     .summary {
         margin-top: 20px;
         padding: 15px;
@@ -56,6 +84,24 @@
 <div class="container">
     <h1>美区正职工考勤打卡率趋势（工作日）</h1>
     <p class="subtitle">数据范围：2026-05-18 至 2026-06-09 | 已跳过周六周日</p>
+    <div class="stats-row">
+        <div class="stat-card avg">
+            <div class="stat-value">68.7%</div>
+            <div class="stat-label">平均值</div>
+        </div>
+        <div class="stat-card med">
+            <div class="stat-value">69.7%</div>
+            <div class="stat-label">中位数</div>
+        </div>
+        <div class="stat-card min">
+            <div class="stat-value">54.9%</div>
+            <div class="stat-label">最低</div>
+        </div>
+        <div class="stat-card max">
+            <div class="stat-value">77.4%</div>
+            <div class="stat-label">最高</div>
+        </div>
+    </div>
     <div class="chart-wrapper">
         <canvas id="chart"></canvas>
     </div>
@@ -66,34 +112,53 @@
     </div>
 </div>
 <script>
+const avgValue = 0.6868200136261491;
 const ctx = document.getElementById('chart').getContext('2d');
 new Chart(ctx, {
     type: 'line',
     data: {
         labels: ['05/18', '05/19', '05/20', '05/21', '05/22', '05/25', '05/26', '05/27', '05/28', '05/29', '06/01', '06/02', '06/03', '06/04', '06/05', '06/08', '06/09'],
-        datasets: [{
-            label: '打卡率',
-            data: [0.549134561697376, 0.673315892740353, 0.676547231270358, 0.6685173089484, 0.694619147449336, 0.563038371182459, 0.691542288557214, 0.715198863636364, 0.693214285714286, 0.774305555555556, 0.697772657450077, 0.71273516642547, 0.701923076923077, 0.708096590909091, 0.7473604826546, 0.711760461760462, 0.696858288770054],
-            borderColor: '#1f77b4',
-            backgroundColor: 'rgba(31, 119, 180, 0.1)',
-            borderWidth: 2.5,
-            pointRadius: 6,
-            pointBackgroundColor: '#1f77b4',
-            pointBorderColor: '#fff',
-            pointBorderWidth: 2,
-            pointHoverRadius: 8,
-            tension: 0.3,
-            fill: true
-        }]
+        datasets: [
+            {
+                label: '打卡率',
+                data: [0.549134561697376, 0.673315892740353, 0.676547231270358, 0.6685173089484, 0.694619147449336, 0.563038371182459, 0.691542288557214, 0.715198863636364, 0.693214285714286, 0.774305555555556, 0.697772657450077, 0.71273516642547, 0.701923076923077, 0.708096590909091, 0.7473604826546, 0.711760461760462, 0.696858288770054],
+                borderColor: '#1f77b4',
+                backgroundColor: 'rgba(31, 119, 180, 0.1)',
+                borderWidth: 2.5,
+                pointRadius: 6,
+                pointBackgroundColor: '#1f77b4',
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2,
+                pointHoverRadius: 8,
+                tension: 0.3,
+                fill: true,
+                order: 2
+            },
+            {
+                label: '平均值 (' + (avgValue * 100).toFixed(1) + '%)',
+                data: Array(17).fill(avgValue),
+                borderColor: '#e74c3c',
+                backgroundColor: 'rgba(231, 76, 60, 0.05)',
+                borderWidth: 2,
+                borderDash: [6, 4],
+                pointRadius: 0,
+                pointHoverRadius: 0,
+                fill: false,
+                order: 1
+            }
+        ]
     },
     options: {
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
-            legend: { display: false },
+            legend: { display: true, position: 'bottom', labels: { usePointStyle: true, padding: 20 } },
             tooltip: {
                 callbacks: {
                     label: function(ctx) {
+                        if (ctx.dataset.label.startsWith('平均值')) {
+                            return '平均值: ' + (ctx.parsed.y * 100).toFixed(1) + '%';
+                        }
                         return '打卡率: ' + (ctx.parsed.y * 100).toFixed(1) + '%';
                     }
                 }
