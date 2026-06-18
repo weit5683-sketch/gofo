@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>欧区考勤打卡率趋势 2026-06</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+    font-family: 'Microsoft YaHei', 'SimHei', sans-serif;
+    background: #f0f2f5;
+    padding: 24px;
+    color: #333;
+}
+h1 {
+    text-align: center;
+    font-size: 22px;
+    margin-bottom: 6px;
+    color: #222;
+}
+.subtitle {
+    text-align: center;
+    color: #888;
+    font-size: 13px;
+    margin-bottom: 28px;
+}
+.section {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+    padding: 24px 28px;
+    margin-bottom: 24px;
+}
+.section-title {
+    font-size: 16px;
+    font-weight: bold;
+    color: #222;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.flag { font-size: 20px; }
+.stats-row {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 18px;
+    flex-wrap: wrap;
+}
+.stat-card {
+    background: linear-gradient(135deg, #f8f9fb 0%, #eef1f5 100%);
+    border-radius: 10px;
+    padding: 10px 18px;
+    text-align: center;
+    min-width: 80px;
+    border-top: 3px solid var(--c, #1f77b4);
+}
+.stat-value {
+    font-size: 20px;
+    font-weight: bold;
+    color: var(--c, #1f77b4);
+}
+.stat-label {
+    font-size: 11px;
+    color: #888;
+    margin-top: 2px;
+}
+.chart-wrapper {
+    position: relative;
+    height: 320px;
+}
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    margin-top: 4px;
+}
+th {
+    background: #f0f2f5;
+    padding: 8px 12px;
+    text-align: left;
+    font-weight: 600;
+    color: #555;
+    border-bottom: 2px solid #e0e0e0;
+}
+td {
+    padding: 7px 12px;
+    border-bottom: 1px solid #f0f0f0;
+    color: #444;
+}
+tr:hover td { background: #fafbff; }
+tr:last-child td { border-bottom: none; }
+.tab-nav {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+.tab-btn {
+    padding: 6px 16px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    background: white;
+    cursor: pointer;
+    font-size: 13px;
+    color: #555;
+    transition: all 0.2s;
+}
+.tab-btn.active {
+    background: #1f77b4;
+    color: white;
+    border-color: #1f77b4;
+}
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+</style>
+</head>
+<body>
+<h1>欧区考勤打卡率趋势分析（2026年6月）</h1>
+<p class="subtitle">数据范围：2026-06-08 至 2026-06-16 | 已跳过周六周日 | 共 7 个工作日</p>
+
+<!-- NL 荷兰 -->
+<div class="section">
+    <div class="section-title"><span class="flag">🇳🇱</span> 荷兰 (NL)</div>
+    <div class="stats-row">
+        <div class="stat-card" style="--c:#1f77b4">
+            <div class="stat-value">68.8%</div>
+            <div class="stat-label">平均值</div>
+        </div>
+        <div class="stat-card" style="--c:#8e44ad">
+            <div class="stat-value">70.0%</div>
+            <div class="stat-label">中位数</div>
+        </div>
+        <div class="stat-card" style="--c:#999">
+            <div class="stat-value">53.9%</div>
+            <div class="stat-label">最低</div>
+        </div>
+        <div class="stat-card" style="--c:#27ae60">
+            <div class="stat-value">83.3%</div>
+            <div class="stat-label">最高</div>
+        </div></div>
+    <div class="chart-wrapper"><canvas id="chart_nl"></canvas></div>
+</div>
+
+<!-- FR 法国 -->
+<div class="section">
+    <div class="section-title"><span class="flag">🇫🇷</span> 法国 (FR)</div>
+    <div class="stats-row">
+        <div class="stat-card" style="--c:#ff7f0e">
+            <div class="stat-value">51.3%</div>
+            <div class="stat-label">平均值</div>
+        </div>
+        <div class="stat-card" style="--c:#8e44ad">
+            <div class="stat-value">48.7%</div>
+            <div class="stat-label">中位数</div>
+        </div>
+        <div class="stat-card" style="--c:#999">
+            <div class="stat-value">44.2%</div>
+            <div class="stat-label">最低</div>
+        </div>
+        <div class="stat-card" style="--c:#27ae60">
+            <div class="stat-value">61.3%</div>
+            <div class="stat-label">最高</div>
+        </div></div>
+    <div class="chart-wrapper"><canvas id="chart_fr"></canvas></div>
+</div>
+
+<!-- IT 意大利 -->
+<div class="section">
+    <div class="section-title"><span class="flag">🇮🇹</span> 意大利 (IT)</div>
+    <div class="stats-row">
+        <div class="stat-card" style="--c:#2ca02c">
+            <div class="stat-value">83.4%</div>
+            <div class="stat-label">平均值</div>
+        </div>
+        <div class="stat-card" style="--c:#8e44ad">
+            <div class="stat-value">85.5%</div>
+            <div class="stat-label">中位数</div>
+        </div>
+        <div class="stat-card" style="--c:#999">
+            <div class="stat-value">71.8%</div>
+            <div class="stat-label">最低</div>
+        </div>
+        <div class="stat-card" style="--c:#27ae60">
+            <div class="stat-value">90.3%</div>
+            <div class="stat-label">最高</div>
+        </div></div>
+    <div class="chart-wrapper"><canvas id="chart_it"></canvas></div>
+</div>
+
+<!-- 三国对比图 -->
+<div class="section">
+    <div class="section-title">📊 三国打卡率对比</div>
+    <div class="chart-wrapper"><canvas id="chart_compare"></canvas></div>
+</div>
+
+<!-- 打卡次数最少明细 -->
+<div class="section">
+    <div class="section-title">🔍 班次内打卡次数最少 TOP10（各国）</div>
+    <div class="tab-nav">
+        <button class="tab-btn active" onclick="switchTab('nl_tab', this)">🇳🇱 荷兰</button>
+        <button class="tab-btn" onclick="switchTab('fr_tab', this)">🇫🇷 法国</button>
+        <button class="tab-btn" onclick="switchTab('it_tab', this)">🇮🇹 意大利</button>
+    </div>
+    <div id="nl_tab" class="tab-content active">
+        <table>
+        <thead><tr>
+            <th>#</th><th>日期</th><th>姓名</th><th>工号</th>
+            <th>班次内打卡次数</th><th>标准打卡数</th>
+        </tr></thead>
+        <tbody><tr>
+            <td>1</td>
+            <td>06-08</td>
+            <td>Santo Zhang</td>
+            <td>GL502496</td>
+            <td style="color:#e74c3c;font-weight:bold">0</td>
+            <td>2</td>
+        </tr><tr>
+            <td>2</td>
+            <td>06-08</td>
+            <td>Shaoling Chen</td>
+            <td>GL501802</td>
+            <td style="color:#e74c3c;font-weight:bold">0</td>
+            <td>2</td>
+        </tr><tr>
+            <td>3</td>
+            <td>06-08</td>
+            <td>Sui Wa Phoebe Chan</td>
+            <td>GL503083</td>
+            <td style="color:#e74c3c;font-weight:bold">0</td>
+            <td>2</td>
+        </tr><tr>
+            <td>4</td>
+            <td>06-08</td>
+            <td>Aiwei Chao</td>
+            <td>GL500141</td>
+            <td style="color:#e74c3c;font-weight:bold">0</td>
+            <td>2</td>
+        </tr><tr>
+            <td>5</td>
+            <td>06-08</td>
+            <td>Arnas Mazeika</td>
+            <td>GL500642</td>
+            <td style="color:#e74c3c;font-weight:bold">0</td>
+            <td>2</td>
+        </tr><tr>
+            <td>6</td>
+            <td>06-08</td>
+            <td>Azher Ishaq</td>
+            <td>GL502978</td>
+            <td style="color:#e74c3c;font-weight:bold">0</td>
+            <td>2</td>
+        </tr><tr>
+            <td>7</td>
+            <td>06-08</td>
+            <td>Binghui Jin</td>
+            <td>GL501358</td>
+            <td style="color:#e74c3c;font-weight:bold">0</td>
+            <td>2</td>
+        </tr><tr>
+            <td>8</td>
+            <td>06-08</td>
+            <td>Bolin Li</td>
+            <td>GL501592</td>
+            <td style="color:#e74c3c;font-weight:bold">0</td>
+            <td>2</td>
+        </tr><tr>
+            <td>9</td>
+            <td>06-08</td>
+            <td>Bolun Li</td>
+            <td>GL500306</td>
+            <td style="color:#e74c3c;font-weight:bold">0</td>
+            <td>2</td>
+        </tr><tr>
+            <td>10</td>
+            <td>06-08</td>
+            <td>Ce Liu</td>
+            <td>GL500513</td>
+            <td style="color:#e74c3c;font-weight:bold">0</td>
+            <td>2</td>
+        </tr></tbody>
+    </table>
+    </div>
+    <div id="fr_tab" class="tab-content">
+        <table>
+        <thead><tr>
+            <th>#</th><th>日期</th><th>姓名</th><th>工号</th>
+            <th>班次内打卡次数</th><th>标准打卡数</th>
+        </tr></thead>
+        <tbody><tr>
+            <td>1</td>
+            <td>06-08</td>
+            <td>Baokang Xie</td>
+            <td>GL503080</td>
+            <td style="color:#e74c3c;font-weight:bold">0</td>
+            <td>2</td>
+        </tr><tr>
+            <td>2</td>
+            <td>06-08</td>
+            <td>Chengyu WANG</td>
+            <td>GL502497</td>
+            <td style="color:#e74c3c;font-weight:bold">0</td>
+            <td>2</td>
+        </tr><tr>
+            <td>3</td>
+            <td>06-08</td>
+            <td>Dehua Song</td>
+            <td>GL503095</td>
+            <td style="color:#e74c3c;font-weight:bold">0</td>
+            <td>2</td>
+        </tr><tr>
+            <td>4</td>
+            <td>06-08</td>
+            <td>Gaelle SIKA</td>
+            <td>GL503096</td>
+            <td style="color:#e74c3c;font-weight:bold">0</td>
+            <td>2</td>
+        </tr><tr>
+            <td>5</td>
+            <td>06-08</td>
+            <td>Jingye MAI</td>
+            <td>GL503050</td>
+            <td style="color:#e74c3c;font-weight:bold">0</td>
+            <td>2</td>
+        </tr><tr>
+            <td>6</td>
+            <td>06-08</td>
+            <td>Kévin VEYGALIER</td>
+            <td>GL502808</td>
+            <td style="color:#e74c3c;font-weight:bold">0</td>
+            <td>2</td>
+        </tr><tr>
+            <td>7</td>
+            <td>06-08</td>
+            <td>Lei SHI</td>
+            <td>GL500616</td>
+            <td style="color:#e74c3c;font-weight:bold">0</td>
+            <td>2</td>
+        </tr><tr>
+            <td>8</td>
+            <td>06-08</td>
+            <td>Mohamed Amine HASSASSI</td>
+            <td>GL502791</td>
+            <td style="color:#e74c3c;font-weight:bold">0</td>
+            <td>2</td>
+        </tr><tr>
+            <td>9</td>
+            <td>06-08</td>
+            <td>Qian Zhang</td>
+            <td>GL502961</td>
+            <td style="color:#e74c3c;font-weight:bold">0</td>
+            <td>2</td>
+        </tr><tr>
+            <td>10</td>
+            <td>06-08</td>
+            <td>Shikai JI</td>
+            <td>GL503022</td>
+            <td style="color:#e74c3c;font-weight:bold">0</td>
+            <td>2</td>
+        </tr></tbody>
+    </table>
+    </div>
+    <div id="it_tab" class="tab-content">
+        <table>
+        <thead><tr>
+            <th>#</th><th>日期</th><th>姓名</th><th>工号</th>
+            <th>班次内打卡次数</th><th>标准打卡数</th>
+        </tr></thead>
+        <tbody><tr>
+            <td>1</td>
+            <td>06-08</td>
+            <td>ALUSINE BAH</td>
+            <td>GL503024</td>
+            <td style="color:#e74c3c;font-weight:bold">0</td>
+            <td>2</td>
+        </tr><tr>
+            <td>2</td>
+            <td>06-08</td>
+            <td>Aixue Liao</td>
+            <td>GL501786</td>
+            <td style="color:#e74c3c;font-weight:bold">0</td>
+            <td>2</td>
+        </tr><tr>
+            <td>3</td>
+            <td>06-08</td>
+            <td>Bolin Du</td>
+            <td>GL502034</td>
+            <td style="color:#e74c3c;font-weight:bold">0</td>
+            <td>2</td>
+        </tr><tr>
+            <td>4</td>
+            <td>06-08</td>
+            <td>Crespin Ramirez Adolfo antonio</td>
+            <td>GL503027</td>
+            <td style="color:#e74c3c;font-weight:bold">0</td>
+            <td>2</td>
+        </tr><tr>
+            <td>5</td>
+            <td>06-08</td>
+            <td>DILAWAR YAQOOB</td>
+            <td>GL501698</td>
+            <td style="color:#e74c3c;font-weight:bold">0</td>
+            <td>2</td>
+        </tr><tr>
+            <td>6</td>
+            <td>06-08</td>
+            <td>David Franka</td>
+            <td>GL503103</td>
+            <td style="color:#e74c3c;font-weight:bold">0</td>
+            <td>2</td>
+        </tr><tr>
+            <td>7</td>
+            <td>06-08</td>
+            <td>Gonzalo Eduardo De Simone</td>
+            <td>GL502085</td>
+            <td style="color:#e74c3c;font-weight:bold">0</td>
+            <td>2</td>
+        </tr><tr>
+            <td>8</td>
+            <td>06-08</td>
+            <td>Hassan Mubashar</td>
+            <td>GL502756</td>
+            <td style="color:#e74c3c;font-weight:bold">0</td>
+            <td>2</td>
+        </tr><tr>
+            <td>9</td>
+            <td>06-08</td>
+            <td>Kun Kang</td>
+            <td>GL501893</td>
+            <td style="color:#e74c3c;font-weight:bold">0</td>
+            <td>2</td>
+        </tr><tr>
+            <td>10</td>
+            <td>06-08</td>
+            <td>Mohammed Imshath Ismath</td>
+            <td>GL502103</td>
+            <td style="color:#e74c3c;font-weight:bold">0</td>
+            <td>2</td>
+        </tr></tbody>
+    </table>
+    </div>
+</div>
+
+<script>
+function makeChart(id, labels, data, color, avg, title) {
+    const ctx = document.getElementById(id).getContext('2d');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: '打卡率',
+                    data: data,
+                    borderColor: color,
+                    backgroundColor: color + '22',
+                    borderWidth: 2.5,
+                    pointRadius: 6,
+                    pointBackgroundColor: color,
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointHoverRadius: 8,
+                    tension: 0.3,
+                    fill: true,
+                    order: 2
+                },
+                {
+                    label: '平均值 (' + (avg * 100).toFixed(1) + '%)',
+                    data: Array(labels.length).fill(avg),
+                    borderColor: '#e74c3c',
+                    borderWidth: 2,
+                    borderDash: [6, 4],
+                    pointRadius: 0,
+                    fill: false,
+                    order: 1
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: true, position: 'bottom', labels: { usePointStyle: true, padding: 16 } },
+                tooltip: {
+                    callbacks: {
+                        label: function(ctx) {
+                            if (ctx.dataset.label.startsWith('平均值')) return '平均值: ' + (ctx.parsed.y * 100).toFixed(1) + '%';
+                            return '打卡率: ' + (ctx.parsed.y * 100).toFixed(1) + '%';
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    min: 0.3923,
+                    max: 0.9527,
+                    ticks: { callback: function(v) { return (v * 100).toFixed(1) + '%'; } },
+                    grid: { color: '#eee' }
+                },
+                x: { grid: { color: '#eee' } }
+            }
+        }
+    });
+}
+
+makeChart('chart_nl', ["06-08", "06-09", "06-10", "06-11", "06-12", "06-15", "06-16"], [0.833333333333333, 0.694444444444444, 0.539013019000704, 0.700487012987013, 0.549346606458675, 0.738454433497537, 0.757936507936508], '#1f77b4', 0.687574, '荷兰');
+makeChart('chart_fr', ["06-08", "06-09", "06-10", "06-11", "06-12", "06-15", "06-16"], [0.593607305936073, 0.515344838730528, 0.442328042328042, 0.487143688190809, 0.484278155706727, 0.612832598873208, 0.453900995426419], '#ff7f0e', 0.512777, '法国');
+makeChart('chart_it', ["06-08", "06-09", "06-10", "06-11", "06-12", "06-15", "06-16"], [0.889455782312925, 0.902721088435374, 0.881786941580756, 0.742708333333333, 0.717592592592593, 0.854545454545454, 0.848299319727891], '#2ca02c', 0.833873, '意大利');
+
+// 三国对比图
+const ctxC = document.getElementById('chart_compare').getContext('2d');
+new Chart(ctxC, {
+    type: 'line',
+    data: {
+        labels: ["06-08", "06-09", "06-10", "06-11", "06-12", "06-15", "06-16"],
+        datasets: [
+            {
+                label: '🇳🇱 荷兰 (NL)',
+                data: [0.833333333333333, 0.694444444444444, 0.539013019000704, 0.700487012987013, 0.549346606458675, 0.738454433497537, 0.757936507936508],
+                borderColor: '#1f77b4',
+                backgroundColor: 'transparent',
+                borderWidth: 2.5,
+                pointRadius: 5,
+                pointBackgroundColor: '#1f77b4',
+                tension: 0.3,
+                order: 3
+            },
+            {
+                label: '🇫🇷 法国 (FR)',
+                data: [0.593607305936073, 0.515344838730528, 0.442328042328042, 0.487143688190809, 0.484278155706727, 0.612832598873208, 0.453900995426419],
+                borderColor: '#ff7f0e',
+                backgroundColor: 'transparent',
+                borderWidth: 2.5,
+                pointRadius: 5,
+                pointBackgroundColor: '#ff7f0e',
+                tension: 0.3,
+                order: 2
+            },
+            {
+                label: '🇮🇹 意大利 (IT)',
+                data: [0.889455782312925, 0.902721088435374, 0.881786941580756, 0.742708333333333, 0.717592592592593, 0.854545454545454, 0.848299319727891],
+                borderColor: '#2ca02c',
+                backgroundColor: 'transparent',
+                borderWidth: 2.5,
+                pointRadius: 5,
+                pointBackgroundColor: '#2ca02c',
+                tension: 0.3,
+                order: 1
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { display: true, position: 'bottom', labels: { usePointStyle: true, padding: 16 } },
+            tooltip: {
+                callbacks: {
+                    label: function(ctx) {
+                        return ctx.dataset.label + ': ' + (ctx.parsed.y * 100).toFixed(1) + '%';
+                    }
+                }
+            }
+        },
+        scales: {
+            y: {
+                min: 0.3923,
+                max: 0.9527,
+                ticks: { callback: function(v) { return (v * 100).toFixed(1) + '%'; } },
+                grid: { color: '#eee' }
+            },
+            x: { grid: { color: '#eee' } }
+        }
+    }
+});
+
+function switchTab(tabId, btn) {
+    document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+    document.getElementById(tabId).classList.add('active');
+    btn.classList.add('active');
+}
+</script>
+</body>
+</html>
