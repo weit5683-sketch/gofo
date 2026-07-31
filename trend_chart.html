@@ -12,6 +12,12 @@
   h1 { text-align: center; color: #2F5496; margin-bottom: 20px; font-size: 22px; }
   .chart-box { background: #fff; border-radius: 8px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); padding: 15px; margin-bottom: 20px; }
   .chart { width: 100%; height: 420px; }
+  .chart-box h2 { text-align: center; color: #2F5496; margin: 5px 0 10px; font-size: 16px; }
+  table.detail-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .detail-table th, .detail-table td { border: 1px solid #d6dde8; padding: 6px 10px; text-align: center; }
+  .detail-table th { background: #2F5496; color: #fff; font-weight: normal; }
+  .detail-table tr:nth-child(even) { background: #f7f9fc; }
+  .no-upload { color: #c0392b; }
 </style>
 </head>
 <body>
@@ -20,12 +26,56 @@
   <div class="chart-box">
     <div id="chart-summary" class="chart"></div>
   </div>
+  <div class="chart-box">
+    <h2>考勤抽检数据明细（抽检量 / 问题数 / 问题占比）</h2>
+    <table class="detail-table">
+      <thead>
+        <tr><th>抽检日期</th><th>国家</th><th>问题数</th><th>考勤记录数（抽检量）</th><th>问题占比</th></tr>
+      </thead>
+      <tbody>
+        <tr><td rowspan="3">2026-07-09</td><td>FR 法国</td><td>1</td><td>138</td><td>1%</td></tr>
+        <tr><td>NL 荷兰</td><td>2</td><td>40</td><td>5%</td></tr>
+        <tr><td>IT 意大利</td><td>1</td><td>40</td><td>2%</td></tr>
+        <tr><td rowspan="3">2026-07-13</td><td>FR 法国</td><td>4</td><td>27</td><td>15%</td></tr>
+        <tr><td>NL 荷兰</td><td>2</td><td>59</td><td>3%</td></tr>
+        <tr><td>IT 意大利</td><td>3</td><td>99</td><td>3%</td></tr>
+        <tr><td rowspan="3">2026-07-14</td><td>FR 法国</td><td class="no-upload">—</td><td class="no-upload">—</td><td class="no-upload">无上传记录</td></tr>
+        <tr><td>NL 荷兰</td><td>2</td><td>59</td><td>3%</td></tr>
+        <tr><td>IT 意大利</td><td>1</td><td>62</td><td>2%</td></tr>
+        <tr><td rowspan="3">2026-07-15</td><td>FR 法国</td><td class="no-upload">—</td><td class="no-upload">—</td><td class="no-upload">无上传记录</td></tr>
+        <tr><td>NL 荷兰</td><td>1</td><td>66</td><td>2%</td></tr>
+        <tr><td>IT 意大利</td><td>1</td><td>65</td><td>2%</td></tr>
+        <tr><td rowspan="3">2026-07-16</td><td>FR 法国</td><td>8</td><td>170</td><td>5%</td></tr>
+        <tr><td>NL 荷兰</td><td>0</td><td>11</td><td>0%</td></tr>
+        <tr><td>IT 意大利</td><td>0</td><td>55</td><td>0%</td></tr>
+        <tr><td rowspan="3">2026-07-22</td><td>FR 法国</td><td>8</td><td>187</td><td>4%</td></tr>
+        <tr><td>NL 荷兰</td><td>1</td><td>73</td><td>1%</td></tr>
+        <tr><td>IT 意大利</td><td>2</td><td>70</td><td>3%</td></tr>
+        <tr><td rowspan="3">2026-07-24</td><td>FR 法国</td><td>8</td><td>194</td><td>4%</td></tr>
+        <tr><td>NL 荷兰</td><td>4</td><td>64</td><td>6%</td></tr>
+        <tr><td>IT 意大利</td><td>2</td><td>74</td><td>3%</td></tr>
+        <tr><td rowspan="3">2026-07-28</td><td>FR 法国</td><td>8</td><td>173</td><td>5%</td></tr>
+        <tr><td>NL 荷兰</td><td>2</td><td>118</td><td>2%</td></tr>
+        <tr><td>IT 意大利</td><td>3</td><td>145</td><td>2%</td></tr>
+      </tbody>
+    </table>
+  </div>
   <div class="chart-box"><div id="chart-fr" class="chart"></div></div>
   <div class="chart-box"><div id="chart-nl" class="chart"></div></div>
   <div class="chart-box"><div id="chart-it" class="chart"></div></div>
 </div>
 <script>
 var chartData = {"allDates": ["6-30", "7-1", "7-2", "7-3", "7-6", "7-7", "7-8", "7-9", "7-10", "7-13", "7-14", "7-15", "7-16", "7-22", "7-24", "7-28"], "summary": {"FRANCE": [{"value": 75, "problemCount": 3, "total": 4}, {"value": 0, "problemCount": 0, "total": 3}, {"value": 0, "problemCount": 0, "total": 4}, {"value": 33, "problemCount": 1, "total": 3}, {"value": 100, "problemCount": 1, "total": 1}, {"value": 0, "problemCount": 0, "total": 4}, {"value": 50, "problemCount": 3, "total": 6}, {"value": 0, "problemCount": 0, "total": 1}, {"value": 14, "problemCount": 1, "total": 7}, {"value": 25, "problemCount": 1, "total": 4}, null, null, {"value": 50, "problemCount": 4, "total": 8}, {"value": 50, "problemCount": 4, "total": 8}, {"value": 50, "problemCount": 4, "total": 8}, {"value": 75, "problemCount": 6, "total": 8}], "NETHERLANDS": [{"value": 100, "problemCount": 2, "total": 2}, null, null, {"value": 50, "problemCount": 2, "total": 4}, null, {"value": 33, "problemCount": 1, "total": 3}, {"value": 25, "problemCount": 1, "total": 4}, {"value": 50, "problemCount": 1, "total": 2}, null, {"value": 100, "problemCount": 2, "total": 2}, {"value": 50, "problemCount": 1, "total": 2}, {"value": 100, "problemCount": 1, "total": 1}, {"value": 0, "problemCount": 0, "total": 0}, {"value": 0, "problemCount": 0, "total": 1}, {"value": 0, "problemCount": 0, "total": 4}, {"value": 0, "problemCount": 0, "total": 2}], "ITALIA": [{"value": 100, "problemCount": 5, "total": 5}, {"value": 100, "problemCount": 2, "total": 2}, {"value": 100, "problemCount": 1, "total": 1}, {"value": 0, "problemCount": 0, "total": 5}, {"value": 33, "problemCount": 1, "total": 3}, {"value": 0, "problemCount": 0, "total": 2}, {"value": 0, "problemCount": 0, "total": 2}, {"value": 0, "problemCount": 0, "total": 1}, {"value": 0, "problemCount": 0, "total": 4}, {"value": 33, "problemCount": 1, "total": 3}, {"value": 0, "problemCount": 0, "total": 1}, {"value": 100, "problemCount": 1, "total": 1}, {"value": 0, "problemCount": 0, "total": 0}, {"value": 0, "problemCount": 0, "total": 2}, {"value": 0, "problemCount": 0, "total": 2}, {"value": 0, "problemCount": 0, "total": 3}]}, "countries": {"FRANCE": {"dates": ["6-30", "7-1", "7-2", "7-3", "7-6", "7-7", "7-8", "7-9", "7-10", "7-13", "7-16", "7-22", "7-24", "7-28"], "fillData": [{"value": 75, "problemCount": 3, "total": 4}, {"value": 0, "problemCount": 0, "total": 3}, {"value": 0, "problemCount": 0, "total": 4}, {"value": 33, "problemCount": 1, "total": 3}, {"value": 100, "problemCount": 1, "total": 1}, {"value": 0, "problemCount": 0, "total": 4}, {"value": 50, "problemCount": 3, "total": 6}, {"value": 0, "problemCount": 0, "total": 1}, {"value": 14, "problemCount": 1, "total": 7}, {"value": 25, "problemCount": 1, "total": 4}, {"value": 50, "problemCount": 4, "total": 8}, {"value": 50, "problemCount": 4, "total": 8}, {"value": 50, "problemCount": 4, "total": 8}, {"value": 75, "problemCount": 6, "total": 8}], "recData": [{"value": 75, "problemCount": 3, "total": 4}, {"value": 100, "problemCount": 3, "total": 3}, {"value": 100, "problemCount": 4, "total": 4}, {"value": 67, "problemCount": 2, "total": 3}, {"value": 0, "problemCount": 0, "total": 1}, {"value": 100, "problemCount": 4, "total": 4}, {"value": 50, "problemCount": 3, "total": 6}, {"value": 100, "problemCount": 1, "total": 1}, {"value": 86, "problemCount": 6, "total": 7}, {"value": 75, "problemCount": 3, "total": 4}, {"value": 62, "problemCount": 5, "total": 8}, {"value": 50, "problemCount": 4, "total": 8}, {"value": 62, "problemCount": 5, "total": 8}, {"value": 38, "problemCount": 3, "total": 8}]}, "NETHERLANDS": {"dates": ["6-30", "7-3", "7-7", "7-8", "7-9", "7-13", "7-14", "7-15", "7-16", "7-22", "7-24", "7-28"], "fillData": [{"value": 100, "problemCount": 2, "total": 2}, {"value": 50, "problemCount": 2, "total": 4}, {"value": 33, "problemCount": 1, "total": 3}, {"value": 25, "problemCount": 1, "total": 4}, {"value": 50, "problemCount": 1, "total": 2}, {"value": 100, "problemCount": 2, "total": 2}, {"value": 50, "problemCount": 1, "total": 2}, {"value": 100, "problemCount": 1, "total": 1}, {"value": 0, "problemCount": 0, "total": 0}, {"value": 0, "problemCount": 0, "total": 1}, {"value": 0, "problemCount": 0, "total": 4}, {"value": 0, "problemCount": 0, "total": 2}], "recData": [{"value": 0, "problemCount": 0, "total": 2}, {"value": 50, "problemCount": 2, "total": 4}, {"value": 67, "problemCount": 2, "total": 3}, {"value": 75, "problemCount": 3, "total": 4}, {"value": 100, "problemCount": 2, "total": 2}, {"value": 0, "problemCount": 0, "total": 2}, {"value": 50, "problemCount": 1, "total": 2}, {"value": 0, "problemCount": 0, "total": 1}, {"value": 0, "problemCount": 0, "total": 0}, {"value": 100, "problemCount": 1, "total": 1}, {"value": 100, "problemCount": 4, "total": 4}, {"value": 100, "problemCount": 2, "total": 2}]}, "ITALIA": {"dates": ["6-30", "7-1", "7-2", "7-3", "7-6", "7-7", "7-8", "7-9", "7-10", "7-13", "7-14", "7-15", "7-16", "7-22", "7-24", "7-28"], "fillData": [{"value": 100, "problemCount": 5, "total": 5}, {"value": 100, "problemCount": 2, "total": 2}, {"value": 100, "problemCount": 1, "total": 1}, {"value": 0, "problemCount": 0, "total": 5}, {"value": 33, "problemCount": 1, "total": 3}, {"value": 0, "problemCount": 0, "total": 2}, {"value": 0, "problemCount": 0, "total": 2}, {"value": 0, "problemCount": 0, "total": 1}, {"value": 0, "problemCount": 0, "total": 4}, {"value": 33, "problemCount": 1, "total": 3}, {"value": 0, "problemCount": 0, "total": 1}, {"value": 100, "problemCount": 1, "total": 1}, {"value": 0, "problemCount": 0, "total": 0}, {"value": 0, "problemCount": 0, "total": 2}, {"value": 0, "problemCount": 0, "total": 2}, {"value": 0, "problemCount": 0, "total": 3}], "recData": [{"value": 40, "problemCount": 2, "total": 5}, {"value": 0, "problemCount": 0, "total": 2}, {"value": 0, "problemCount": 0, "total": 1}, {"value": 100, "problemCount": 5, "total": 5}, {"value": 67, "problemCount": 2, "total": 3}, {"value": 100, "problemCount": 2, "total": 2}, {"value": 100, "problemCount": 2, "total": 2}, {"value": 100, "problemCount": 1, "total": 1}, {"value": 100, "problemCount": 4, "total": 4}, {"value": 67, "problemCount": 2, "total": 3}, {"value": 100, "problemCount": 1, "total": 1}, {"value": 0, "problemCount": 0, "total": 1}, {"value": 0, "problemCount": 0, "total": 0}, {"value": 100, "problemCount": 2, "total": 2}, {"value": 100, "problemCount": 2, "total": 2}, {"value": 100, "problemCount": 3, "total": 3}]}}};
+
+var fullDateMap = {"6-30": "2026-06-30", "7-1": "2026-07-01", "7-2": "2026-07-02", "7-3": "2026-07-03", "7-6": "2026-07-06", "7-7": "2026-07-07", "7-8": "2026-07-08", "7-9": "2026-07-09", "7-10": "2026-07-10", "7-13": "2026-07-13", "7-14": "2026-07-14", "7-15": "2026-07-15", "7-16": "2026-07-16", "7-22": "2026-07-22", "7-24": "2026-07-24", "7-28": "2026-07-28"};
+
+var recData = {
+  "FRANCE": {"7-9": 138, "7-13": 27, "7-16": 170, "7-22": 187, "7-24": 194, "7-28": 173},
+  "NETHERLANDS": {"7-9": 40, "7-13": 59, "7-14": 59, "7-15": 66, "7-16": 11, "7-22": 73, "7-24": 64, "7-28": 118},
+  "ITALIA": {"7-9": 40, "7-13": 99, "7-14": 62, "7-15": 65, "7-16": 55, "7-22": 70, "7-24": 74, "7-28": 145}
+};
+var noUpload = {"FRANCE": ["7-14", "7-15"]};
+var keyBySeries = {'FR 法国': 'FRANCE', 'NL 荷兰': 'NETHERLANDS', 'IT 意大利': 'ITALIA'};
 
 var colors = {
   fr: '#4472C4',
@@ -39,11 +89,11 @@ function labelFmt(p) {
   return p.value + '%';
 }
 
-// ---- Summary chart: 3 countries filling ratio ----
+// ---- Summary chart: 3 countries fill ratio ----
 var chartSummary = echarts.init(document.getElementById('chart-summary'));
 chartSummary.setOption({
   title: {
-    text: '各区域占比趋势对比',
+    text: '各区域填写规范问题占比趋势对比',
     left: 'center', top: 5,
     textStyle: { fontSize: 16, color: '#333', fontWeight: 'bold' }
   },
@@ -51,25 +101,35 @@ chartSummary.setOption({
     trigger: 'axis',
     axisPointer: { type: 'line' },
     formatter: function(params) {
-      var html = params[0].axisValue + '<br/>';
+      var short = chartData.allDates[params[0].dataIndex];
+      var html = '<b>' + (fullDateMap[short] || short) + '</b><br/>';
       params.forEach(function(p) {
-        if (p.data !== null && p.data !== undefined) {
-          html += p.marker + p.seriesName + ': ' + p.value + '%';
-          html += ' (问题: ' + p.data.problemCount + '/' + p.data.total + ')<br/>';
+        if (p.data === null || p.data === undefined) {
+          var nu = noUpload[keyBySeries[p.seriesName]];
+          if (nu && nu.indexOf(short) >= 0) {
+            html += p.marker + p.seriesName + '：/（无上传记录）<br/>';
+          }
+          return;
         }
+        var rec = recData[keyBySeries[p.seriesName]] ? recData[keyBySeries[p.seriesName]][short] : undefined;
+        var recText = (rec !== undefined) ? ('抽检量：' + rec + ' 条 ｜ 问题记录：' + p.data.total + ' 条') : ('问题记录：' + p.data.total + ' 条');
+        html += p.marker + p.seriesName + '：' + p.value + '%（' + p.data.problemCount + '/' + p.data.total + '）<br/>';
+        html += '&nbsp;&nbsp;&nbsp;&nbsp;' + recText + '<br/>';
       });
       return html;
     }
   },
   legend: { data: ['FR 法国', 'NL 荷兰', 'IT 意大利'], top: 35, textStyle: { fontSize: 12 } },
-  grid: { left: '7%', right: '5%', bottom: '12%', top: 80 },
+  grid: { left: '13%', right: '6%', bottom: '17%', top: 85 },
   xAxis: {
     type: 'category', data: chartData.allDates,
+    name: '抽检日期', nameLocation: 'middle', nameGap: 42, nameTextStyle: { fontSize: 12, color: '#333' },
     axisLabel: { rotate: 35, fontSize: 11 },
     boundaryGap: false
   },
   yAxis: {
     type: 'value', max: 100,
+    name: '填写规范问题占比', nameLocation: 'middle', nameGap: 55, nameTextStyle: { fontSize: 12, color: '#333' },
     axisLabel: { formatter: '{value}%' },
     splitLine: { lineStyle: { type: 'dashed' } }
   },
@@ -91,18 +151,6 @@ chartSummary.setOption({
       data: chartData.summary.ITALIA,
       itemStyle: { color: colors.it }, lineStyle: { width: 2 }, symbolSize: 7,
       label: { show: true, position: 'top', formatter: labelFmt, fontSize: 10, color: colors.it }
-    }
-  ],
-  graphic: [
-    {
-      type: 'group',
-      right: 15,
-      top: 40,
-      children: [
-        { type: 'text', left: 0, top: 0, style: { text: 'FR 法国  问题记录：69条  抽检记录：889条', fill: colors.fr, font: '12px Microsoft YaHei', fontWeight: 'bold' } },
-        { type: 'text', left: 0, top: 18, style: { text: 'NL 荷兰  问题记录：27条  抽检记录：490条', fill: colors.nl, font: '12px Microsoft YaHei', fontWeight: 'bold' } },
-        { type: 'text', left: 0, top: 36, style: { text: 'IT 意大利  问题记录：37条  抽检记录：610条', fill: colors.it, font: '12px Microsoft YaHei', fontWeight: 'bold' } }
-      ]
     }
   ]
 });
