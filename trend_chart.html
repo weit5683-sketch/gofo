@@ -104,9 +104,12 @@ function labelFmt(p) {
 var chartSummary = echarts.init(document.getElementById('chart-summary'));
 chartSummary.setOption({
   title: {
-    text: '各区域填写规范问题占比趋势对比',
+    text: '各区域{red|填写规范问题}占比趋势对比',
     left: 'center', top: 5,
-    textStyle: { fontSize: 16, color: '#333', fontWeight: 'bold' }
+    textStyle: {
+      fontSize: 16, color: '#333', fontWeight: 'bold',
+      rich: { red: { color: '#c0392b', fontWeight: 'bold' } }
+    }
   },
   tooltip: {
     trigger: 'axis',
