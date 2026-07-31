@@ -43,7 +43,7 @@ function labelFmt(p) {
 var chartSummary = echarts.init(document.getElementById('chart-summary'));
 chartSummary.setOption({
   title: {
-    text: '各区域填写规范问题占比趋势对比',
+    text: '各区域占比趋势对比',
     left: 'center', top: 5,
     textStyle: { fontSize: 16, color: '#333', fontWeight: 'bold' }
   },
@@ -55,7 +55,7 @@ chartSummary.setOption({
       params.forEach(function(p) {
         if (p.data !== null && p.data !== undefined) {
           html += p.marker + p.seriesName + ': ' + p.value + '%';
-          html += ' (填写规范问题: ' + p.data.problemCount + '/' + p.data.total + ')<br/>';
+          html += ' (问题: ' + p.data.problemCount + '/' + p.data.total + ')<br/>';
         }
       });
       return html;
@@ -91,6 +91,18 @@ chartSummary.setOption({
       data: chartData.summary.ITALIA,
       itemStyle: { color: colors.it }, lineStyle: { width: 2 }, symbolSize: 7,
       label: { show: true, position: 'top', formatter: labelFmt, fontSize: 10, color: colors.it }
+    }
+  ],
+  graphic: [
+    {
+      type: 'group',
+      right: 15,
+      top: 40,
+      children: [
+        { type: 'text', left: 0, top: 0, style: { text: 'FR 法国  问题记录：69条  抽检记录：889条', fill: colors.fr, font: '12px Microsoft YaHei', fontWeight: 'bold' } },
+        { type: 'text', left: 0, top: 18, style: { text: 'NL 荷兰  问题记录：27条  抽检记录：490条', fill: colors.nl, font: '12px Microsoft YaHei', fontWeight: 'bold' } },
+        { type: 'text', left: 0, top: 36, style: { text: 'IT 意大利  问题记录：37条  抽检记录：610条', fill: colors.it, font: '12px Microsoft YaHei', fontWeight: 'bold' } }
+      ]
     }
   ]
 });
