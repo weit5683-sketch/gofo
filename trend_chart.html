@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>考勤抽检问题趋势分析</title>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Microsoft YaHei', 'Segoe UI', sans-serif; background: #f0f2f5; padding: 20px; }
+  .container { max-width: 1500px; margin: 0 auto; }
+  h1 { text-align: center; color: #2F5496; margin-bottom: 20px; font-size: 22px; }
+  .chart-box { background: #fff; border-radius: 8px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); padding: 15px; margin-bottom: 20px; }
+  .chart { width: 100%; height: 420px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>GEU劳务工考勤抽检问题趋势分析（2026-06-30 至 2026-07-28）</h1>
+  <div class="chart-box">
+    <div id="chart-summary" class="chart"></div>
+  </div>
+  <div class="chart-box"><div id="chart-fr" class="chart"></div></div>
+  <div class="chart-box"><div id="chart-nl" class="chart"></div></div>
+  <div class="chart-box"><div id="chart-it" class="chart"></div></div>
+</div>
+<script>
+var chartData = {"allDates": ["6-30", "7-1", "7-2", "7-3", "7-6", "7-7", "7-8", "7-9", "7-10", "7-13", "7-14", "7-15", "7-16", "7-22", "7-24", "7-28"], "summary": {"FRANCE": [{"value": 75, "problemCount": 3, "total": 4}, {"value": 0, "problemCount": 0, "total": 3}, {"value": 0, "problemCount": 0, "total": 4}, {"value": 33, "problemCount": 1, "total": 3}, {"value": 100, "problemCount": 1, "total": 1}, {"value": 0, "problemCount": 0, "total": 4}, {"value": 50, "problemCount": 3, "total": 6}, {"value": 0, "problemCount": 0, "total": 1}, {"value": 14, "problemCount": 1, "total": 7}, {"value": 25, "problemCount": 1, "total": 4}, null, null, {"value": 50, "problemCount": 4, "total": 8}, {"value": 50, "problemCount": 4, "total": 8}, {"value": 50, "problemCount": 4, "total": 8}, {"value": 75, "problemCount": 6, "total": 8}], "NETHERLANDS": [{"value": 100, "problemCount": 2, "total": 2}, null, null, {"value": 50, "problemCount": 2, "total": 4}, null, {"value": 33, "problemCount": 1, "total": 3}, {"value": 25, "problemCount": 1, "total": 4}, {"value": 50, "problemCount": 1, "total": 2}, null, {"value": 100, "problemCount": 2, "total": 2}, {"value": 50, "problemCount": 1, "total": 2}, {"value": 100, "problemCount": 1, "total": 1}, {"value": 0, "problemCount": 0, "total": 0}, {"value": 0, "problemCount": 0, "total": 1}, {"value": 0, "problemCount": 0, "total": 4}, {"value": 0, "problemCount": 0, "total": 2}], "ITALIA": [{"value": 100, "problemCount": 5, "total": 5}, {"value": 100, "problemCount": 2, "total": 2}, {"value": 100, "problemCount": 1, "total": 1}, {"value": 0, "problemCount": 0, "total": 5}, {"value": 33, "problemCount": 1, "total": 3}, {"value": 0, "problemCount": 0, "total": 2}, {"value": 0, "problemCount": 0, "total": 2}, {"value": 0, "problemCount": 0, "total": 1}, {"value": 0, "problemCount": 0, "total": 4}, {"value": 33, "problemCount": 1, "total": 3}, {"value": 0, "problemCount": 0, "total": 1}, {"value": 100, "problemCount": 1, "total": 1}, {"value": 0, "problemCount": 0, "total": 0}, {"value": 0, "problemCount": 0, "total": 2}, {"value": 0, "problemCount": 0, "total": 2}, {"value": 0, "problemCount": 0, "total": 3}]}, "countries": {"FRANCE": {"dates": ["6-30", "7-1", "7-2", "7-3", "7-6", "7-7", "7-8", "7-9", "7-10", "7-13", "7-16", "7-22", "7-24", "7-28"], "fillData": [{"value": 75, "problemCount": 3, "total": 4}, {"value": 0, "problemCount": 0, "total": 3}, {"value": 0, "problemCount": 0, "total": 4}, {"value": 33, "problemCount": 1, "total": 3}, {"value": 100, "problemCount": 1, "total": 1}, {"value": 0, "problemCount": 0, "total": 4}, {"value": 50, "problemCount": 3, "total": 6}, {"value": 0, "problemCount": 0, "total": 1}, {"value": 14, "problemCount": 1, "total": 7}, {"value": 25, "problemCount": 1, "total": 4}, {"value": 50, "problemCount": 4, "total": 8}, {"value": 50, "problemCount": 4, "total": 8}, {"value": 50, "problemCount": 4, "total": 8}, {"value": 75, "problemCount": 6, "total": 8}], "recData": [{"value": 75, "problemCount": 3, "total": 4}, {"value": 100, "problemCount": 3, "total": 3}, {"value": 100, "problemCount": 4, "total": 4}, {"value": 67, "problemCount": 2, "total": 3}, {"value": 0, "problemCount": 0, "total": 1}, {"value": 100, "problemCount": 4, "total": 4}, {"value": 50, "problemCount": 3, "total": 6}, {"value": 100, "problemCount": 1, "total": 1}, {"value": 86, "problemCount": 6, "total": 7}, {"value": 75, "problemCount": 3, "total": 4}, {"value": 62, "problemCount": 5, "total": 8}, {"value": 50, "problemCount": 4, "total": 8}, {"value": 62, "problemCount": 5, "total": 8}, {"value": 38, "problemCount": 3, "total": 8}]}, "NETHERLANDS": {"dates": ["6-30", "7-3", "7-7", "7-8", "7-9", "7-13", "7-14", "7-15", "7-16", "7-22", "7-24", "7-28"], "fillData": [{"value": 100, "problemCount": 2, "total": 2}, {"value": 50, "problemCount": 2, "total": 4}, {"value": 33, "problemCount": 1, "total": 3}, {"value": 25, "problemCount": 1, "total": 4}, {"value": 50, "problemCount": 1, "total": 2}, {"value": 100, "problemCount": 2, "total": 2}, {"value": 50, "problemCount": 1, "total": 2}, {"value": 100, "problemCount": 1, "total": 1}, {"value": 0, "problemCount": 0, "total": 0}, {"value": 0, "problemCount": 0, "total": 1}, {"value": 0, "problemCount": 0, "total": 4}, {"value": 0, "problemCount": 0, "total": 2}], "recData": [{"value": 0, "problemCount": 0, "total": 2}, {"value": 50, "problemCount": 2, "total": 4}, {"value": 67, "problemCount": 2, "total": 3}, {"value": 75, "problemCount": 3, "total": 4}, {"value": 100, "problemCount": 2, "total": 2}, {"value": 0, "problemCount": 0, "total": 2}, {"value": 50, "problemCount": 1, "total": 2}, {"value": 0, "problemCount": 0, "total": 1}, {"value": 0, "problemCount": 0, "total": 0}, {"value": 100, "problemCount": 1, "total": 1}, {"value": 100, "problemCount": 4, "total": 4}, {"value": 100, "problemCount": 2, "total": 2}]}, "ITALIA": {"dates": ["6-30", "7-1", "7-2", "7-3", "7-6", "7-7", "7-8", "7-9", "7-10", "7-13", "7-14", "7-15", "7-16", "7-22", "7-24", "7-28"], "fillData": [{"value": 100, "problemCount": 5, "total": 5}, {"value": 100, "problemCount": 2, "total": 2}, {"value": 100, "problemCount": 1, "total": 1}, {"value": 0, "problemCount": 0, "total": 5}, {"value": 33, "problemCount": 1, "total": 3}, {"value": 0, "problemCount": 0, "total": 2}, {"value": 0, "problemCount": 0, "total": 2}, {"value": 0, "problemCount": 0, "total": 1}, {"value": 0, "problemCount": 0, "total": 4}, {"value": 33, "problemCount": 1, "total": 3}, {"value": 0, "problemCount": 0, "total": 1}, {"value": 100, "problemCount": 1, "total": 1}, {"value": 0, "problemCount": 0, "total": 0}, {"value": 0, "problemCount": 0, "total": 2}, {"value": 0, "problemCount": 0, "total": 2}, {"value": 0, "problemCount": 0, "total": 3}], "recData": [{"value": 40, "problemCount": 2, "total": 5}, {"value": 0, "problemCount": 0, "total": 2}, {"value": 0, "problemCount": 0, "total": 1}, {"value": 100, "problemCount": 5, "total": 5}, {"value": 67, "problemCount": 2, "total": 3}, {"value": 100, "problemCount": 2, "total": 2}, {"value": 100, "problemCount": 2, "total": 2}, {"value": 100, "problemCount": 1, "total": 1}, {"value": 100, "problemCount": 4, "total": 4}, {"value": 67, "problemCount": 2, "total": 3}, {"value": 100, "problemCount": 1, "total": 1}, {"value": 0, "problemCount": 0, "total": 1}, {"value": 0, "problemCount": 0, "total": 0}, {"value": 100, "problemCount": 2, "total": 2}, {"value": 100, "problemCount": 2, "total": 2}, {"value": 100, "problemCount": 3, "total": 3}]}}};
+
+var colors = {
+  fr: '#4472C4',
+  nl: '#ED7D31',
+  it: '#70AD47',
+  fill: '#ED7D31',
+  rec: '#4472C4'
+};
+
+function labelFmt(p) {
+  return p.value + '%';
+}
+
+// ---- Summary chart: 3 countries filling ratio ----
+var chartSummary = echarts.init(document.getElementById('chart-summary'));
+chartSummary.setOption({
+  title: {
+    text: '各区域填写规范问题占比趋势对比',
+    left: 'center', top: 5,
+    textStyle: { fontSize: 16, color: '#333', fontWeight: 'bold' }
+  },
+  tooltip: {
+    trigger: 'axis',
+    axisPointer: { type: 'line' },
+    formatter: function(params) {
+      var html = params[0].axisValue + '<br/>';
+      params.forEach(function(p) {
+        if (p.data !== null && p.data !== undefined) {
+          html += p.marker + p.seriesName + ': ' + p.value + '%';
+          html += ' (填写规范问题: ' + p.data.problemCount + '/' + p.data.total + ')<br/>';
+        }
+      });
+      return html;
+    }
+  },
+  legend: { data: ['FR 法国', 'NL 荷兰', 'IT 意大利'], top: 35, textStyle: { fontSize: 12 } },
+  grid: { left: '7%', right: '5%', bottom: '12%', top: 80 },
+  xAxis: {
+    type: 'category', data: chartData.allDates,
+    axisLabel: { rotate: 35, fontSize: 11 },
+    boundaryGap: false
+  },
+  yAxis: {
+    type: 'value', max: 100,
+    axisLabel: { formatter: '{value}%' },
+    splitLine: { lineStyle: { type: 'dashed' } }
+  },
+  series: [
+    {
+      name: 'FR 法国', type: 'line', connectNulls: true,
+      data: chartData.summary.FRANCE,
+      itemStyle: { color: colors.fr }, lineStyle: { width: 2 }, symbolSize: 7,
+      label: { show: true, position: 'top', formatter: labelFmt, fontSize: 10, color: colors.fr }
+    },
+    {
+      name: 'NL 荷兰', type: 'line', connectNulls: true,
+      data: chartData.summary.NETHERLANDS,
+      itemStyle: { color: colors.nl }, lineStyle: { width: 2 }, symbolSize: 7,
+      label: { show: true, position: 'top', formatter: labelFmt, fontSize: 10, color: colors.nl }
+    },
+    {
+      name: 'IT 意大利', type: 'line', connectNulls: true,
+      data: chartData.summary.ITALIA,
+      itemStyle: { color: colors.it }, lineStyle: { width: 2 }, symbolSize: 7,
+      label: { show: true, position: 'top', formatter: labelFmt, fontSize: 10, color: colors.it }
+    }
+  ]
+});
+
+// ---- Country chart factory ----
+function makeCountryChart(domId, title, countryKey) {
+  var chart = echarts.init(document.getElementById(domId));
+  var cd = chartData.countries[countryKey];
+  chart.setOption({
+    title: {
+      text: title,
+      left: 'center', top: 5,
+      textStyle: { fontSize: 14, color: '#333', fontWeight: 'bold' }
+    },
+    tooltip: {
+      trigger: 'axis',
+      axisPointer: { type: 'line' },
+      formatter: function(params) {
+        var html = params[0].axisValue + '<br/>';
+        params.forEach(function(p) {
+          if (p.data !== null && p.data !== undefined) {
+            html += p.marker + p.seriesName + ': ' + p.value + '%';
+            html += ' (' + p.data.problemCount + '/' + p.data.total + ')<br/>';
+          }
+        });
+        return html;
+      }
+    },
+    legend: { data: ['填写规范问题', '识别问题'], top: 30, textStyle: { fontSize: 11 } },
+    grid: { left: '10%', right: '5%', bottom: '15%', top: 65 },
+    xAxis: {
+      type: 'category', data: cd.dates,
+      axisLabel: { rotate: 35, fontSize: 11 },
+      boundaryGap: false
+    },
+    yAxis: {
+      type: 'value', max: 100,
+      axisLabel: { formatter: '{value}%' },
+      splitLine: { lineStyle: { type: 'dashed' } }
+    },
+    series: [
+      {
+        name: '填写规范问题', type: 'line',
+        data: cd.fillData,
+        itemStyle: { color: colors.fill }, lineStyle: { width: 2 }, symbolSize: 7,
+        label: { show: true, position: 'top', formatter: labelFmt, fontSize: 10, color: colors.fill }
+      },
+      {
+        name: '识别问题', type: 'line',
+        data: cd.recData,
+        itemStyle: { color: colors.rec }, lineStyle: { width: 2 }, symbolSize: 7,
+        label: { show: true, position: 'bottom', formatter: labelFmt, fontSize: 10, color: colors.rec }
+      }
+    ]
+  });
+  return chart;
+}
+
+var chartFR = makeCountryChart('chart-fr', '法国(FR) — 填写规范与识别问题占比趋势', 'FRANCE');
+var chartNL = makeCountryChart('chart-nl', '荷兰(NL) — 填写规范与识别问题占比趋势', 'NETHERLANDS');
+var chartIT = makeCountryChart('chart-it', '意大利(IT) — 填写规范与识别问题占比趋势', 'ITALIA');
+
+window.addEventListener('resize', function() {
+  chartSummary.resize();
+  chartFR.resize();
+  chartNL.resize();
+  chartIT.resize();
+});
+</script>
+</body>
+</html>
