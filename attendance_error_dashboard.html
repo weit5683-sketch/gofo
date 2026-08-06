@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>GEU 考勤差错率趋势看板 — multi-week</title>
+<style>
+  :root {
+    --bg:#f4f6fa; --card:#ffffff; --ink:#1f2937; --muted:#6b7280;
+    --line:#e5e7eb; --accent:#2563eb;
+  }
+  * { box-sizing: border-box; margin:0; padding:0; }
+  body {
+    font-family: "Segoe UI","Microsoft YaHei",Arial,sans-serif;
+    background:var(--bg); color:var(--ink); padding:20px;
+  }
+  header { max-width:1200px; margin:0 auto 8px; }
+  h1 { font-size:22px; font-weight:600; }
+  .sub { color:var(--muted); font-size:13px; margin-top:4px; }
+  .legend-hint { color:var(--muted); font-size:12px; margin-top:6px; }
+  .grid { max-width:1200px; margin:0 auto; display:grid; grid-template-columns:1fr; gap:18px; margin-top:14px; }
+  .card {
+    background:var(--card); border:1px solid var(--line); border-radius:12px;
+    padding:10px 8px 2px; box-shadow:0 1px 3px rgba(16,24,40,.06);
+  }
+  .card h2 {
+    font-size:16px; font-weight:600; padding:6px 12px 0;
+    display:flex; align-items:baseline; gap:10px;
+  }
+  .card h2 .cn { color:var(--accent); }
+  .card h2 .en { color:var(--muted); font-size:12px; font-weight:400; }
+  .card .head { display:flex; align-items:flex-start; justify-content:space-between; padding:6px 12px 0; }
+  .card .head .titles { display:flex; align-items:baseline; gap:10px; }
+  .card .head .cn { color:var(--accent); font-size:16px; font-weight:600; }
+  .card .head .en { color:var(--muted); font-size:12px; }
+  .card .summ {
+    font-size:12px; line-height:1.55; text-align:right;
+    border:1px solid var(--line); border-radius:8px;
+    padding:6px 10px; background:#f8fafc; color:var(--ink);
+    white-space:nowrap;
+  }
+  .card .summ b { color:var(--accent); }
+  .card .summ .rate { color:var(--accent); font-weight:600; }
+  .ch-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; padding:4px 8px 2px; }
+  .ch-box { min-width:0; }
+  .ch-title {
+    font-size:12px; color:var(--muted); font-weight:600;
+    padding:2px 4px 0; letter-spacing:.2px;
+  }
+  .ch-title.t-type { color:var(--accent); }
+  .ch-title.t-wh { color:#d97706; }
+  .chart { width:100%; height:440px; }
+  footer {
+    max-width:1200px; margin:18px auto 0; color:var(--muted);
+    font-size:12px; line-height:1.7;
+  }
+  footer b { color:var(--ink); }
+</style>
+</head>
+<body>
+<header>
+  <h1>GEU 考勤差错率趋势看板 <span style="color:var(--muted);font-weight:400;font-size:14px;">(周期 multi-week)</span></h1>
+  <div class="sub">数据来源：GEU AI考勤工具考勤纠错台账（法国 / 荷兰 / 意大利）｜按“国家”分别展示</div>
+  <div class="legend-hint">每国两图：左图按差错类型着色，右图按仓库着色 · 横轴 = 周期 · 纵轴 = 差错率(%) · 悬停数据点可查看差错数量与考勤总数</div>
+</header>
+<div class="grid" id="grid"></div>
+<footer>
+  <b>说明：</b>“差错率”= 差错数量 ÷ 考勤总数 × 100%，数值已标注于各数据点上方；悬停数据点可查看对应周期与维度的<b>差错数量</b>与<b>考勤总数</b>。<br/>
+  左图按<b>差错类型</b>着色（签到表上传错漏 / 签到表模板/填写问题 / 工具识别错误 / 其他问题），右图按<b>仓库</b>着色。卡片右上角汇总框展示该国最近一期的<b>差错总量 / 考勤总数 / 综合差错率</b>。数据来自两份台账（各国综合台账 + week27 台账），按日期范围去重合并。部分周期台账未记录差错数据，图中仅显示有记录的周期。
+</footer>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
+<script>
+var CHARTS = [{"name": "法国", "periods": ["week28(0706-0712)", "week29(0713-0719)", "week30(0720-0726)", "week31(0727-0802)"], "series": [{"name": "签到表上传错漏", "points": [{"period": "week28(0706-0712)", "rate": 0.0, "qty": 0.0, "total": 394.0}, {"period": "week29(0713-0719)", "rate": 0.0, "qty": 0.0, "total": 307.0}, {"period": "week30(0720-0726)", "rate": 0.0, "qty": 0.0, "total": 926.0}, {"period": "week31(0727-0802)", "rate": 0.0, "qty": 0.0, "total": 661.0}], "color": "#2563eb"}, {"name": "签到表模板/填写问题", "points": [{"period": "week28(0706-0712)", "rate": 0.050761421319796954, "qty": 20.0, "total": 394.0}, {"period": "week29(0713-0719)", "rate": 0.06514657980456026, "qty": 20.0, "total": 307.0}, {"period": "week30(0720-0726)", "rate": 0.032397408207343416, "qty": 30.0, "total": 926.0}, {"period": "week31(0727-0802)", "rate": 0.060514372163388806, "qty": 40.0, "total": 661.0}], "color": "#d97706"}, {"name": "工具识别错误", "points": [{"period": "week28(0706-0712)", "rate": 0.25380710659898476, "qty": 100.0, "total": 394.0}, {"period": "week29(0713-0719)", "rate": 0.3583061889250814, "qty": 110.0, "total": 307.0}, {"period": "week30(0720-0726)", "rate": 0.19438444924406048, "qty": 180.0, "total": 926.0}, {"period": "week31(0727-0802)", "rate": 0.2708018154311649, "qty": 179.0, "total": 661.0}], "color": "#dc2626"}, {"name": "其他问题", "points": [{"period": "week28(0706-0712)", "rate": 0.0, "qty": 0.0, "total": 394.0}, {"period": "week29(0713-0719)", "rate": 0.0, "qty": 0.0, "total": 307.0}, {"period": "week30(0720-0726)", "rate": 0.0, "qty": 0.0, "total": 926.0}, {"period": "week31(0727-0802)", "rate": 0.0, "qty": 0.0, "total": 661.0}], "color": "#059669"}], "wh_series": [{"name": "Bonneuil", "points": [{"period": "week28(0706-0712)", "rate": 0.0, "qty": 0.0, "total": 0}, {"period": "week29(0713-0719)", "rate": 0.0, "qty": 0.0, "total": 0}, {"period": "week30(0720-0726)", "rate": 0.0, "qty": 0.0, "total": 0}, {"period": "week31(0727-0802)", "rate": 0.0, "qty": 0.0, "total": 0}], "color": "#2563eb"}, {"name": "CORBAS", "points": [{"period": "week28(0706-0712)", "rate": 0.0, "qty": 0.0, "total": 0}, {"period": "week29(0713-0719)", "rate": 0.0, "qty": 0.0, "total": 0}, {"period": "week30(0720-0726)", "rate": 0.0, "qty": 0.0, "total": 0}, {"period": "week31(0727-0802)", "rate": 0.0, "qty": 0.0, "total": 0}], "color": "#d97706"}, {"name": "MONTPELLIER", "points": [{"period": "week28(0706-0712)", "rate": 0.0, "qty": 0.0, "total": 0}, {"period": "week29(0713-0719)", "rate": 0.0, "qty": 0.0, "total": 0}, {"period": "week30(0720-0726)", "rate": 0.0, "qty": 0.0, "total": 0}, {"period": "week31(0727-0802)", "rate": 0.0, "qty": 0.0, "total": 0}], "color": "#059669"}, {"name": "Strasbourg", "points": [{"period": "week28(0706-0712)", "rate": 0.0, "qty": 0.0, "total": 0}, {"period": "week29(0713-0719)", "rate": 0.0, "qty": 0.0, "total": 0}, {"period": "week30(0720-0726)", "rate": 0.0, "qty": 0.0, "total": 0}, {"period": "week31(0727-0802)", "rate": 0.0, "qty": 0.0, "total": 0}], "color": "#7c3aed"}, {"name": "TOULOUSE", "points": [{"period": "week28(0706-0712)", "rate": 0.0, "qty": 0.0, "total": 0}, {"period": "week29(0713-0719)", "rate": 0.0, "qty": 0.0, "total": 0}, {"period": "week30(0720-0726)", "rate": 0.0, "qty": 0.0, "total": 0}, {"period": "week31(0727-0802)", "rate": 0.0, "qty": 0.0, "total": 0}], "color": "#db2777"}, {"name": "marly", "points": [{"period": "week28(0706-0712)", "rate": 0.30456852791878175, "qty": 120.0, "total": 394.0}, {"period": "week29(0713-0719)", "rate": 0.4234527687296417, "qty": 130.0, "total": 307.0}, {"period": "week30(0720-0726)", "rate": 0.2267818574514039, "qty": 210.0, "total": 926.0}, {"period": "week31(0727-0802)", "rate": 0.3313161875945537, "qty": 219.0, "total": 661.0}], "color": "#0891b2"}, {"name": "marseille", "points": [{"period": "week28(0706-0712)", "rate": 0.0, "qty": 0.0, "total": 0}, {"period": "week29(0713-0719)", "rate": 0.0, "qty": 0.0, "total": 0}, {"period": "week30(0720-0726)", "rate": 0.0, "qty": 0.0, "total": 0}, {"period": "week31(0727-0802)", "rate": 0.0, "qty": 0.0, "total": 0}], "color": "#65a30d"}], "summ": {"total_qty": 219.0, "total_att": 661.0, "rate": 0.3313161875945537}, "latest": "week31(0727-0802)"}, {"name": "荷兰", "periods": ["week29(0713-0719)", "week30(0720-0726)", "week31(0727-0802)"], "series": [{"name": "签到表上传错漏", "points": [{"period": "week29(0713-0719)", "rate": 0.0, "qty": 0.0, "total": 410.0}, {"period": "week30(0720-0726)", "rate": 0.01583710407239819, "qty": 7.0, "total": 442.0}, {"period": "week31(0727-0802)", "rate": 0.0, "qty": 0.0, "total": 347.0}], "color": "#2563eb"}, {"name": "签到表模板/填写问题", "points": [{"period": "week29(0713-0719)", "rate": 0.00975609756097561, "qty": 4.0, "total": 410.0}, {"period": "week30(0720-0726)", "rate": 0.00904977375565611, "qty": 4.0, "total": 442.0}, {"period": "week31(0727-0802)", "rate": 0.0, "qty": 0.0, "total": 347.0}], "color": "#d97706"}, {"name": "工具识别错误", "points": [{"period": "week29(0713-0719)", "rate": 0.01707317073170732, "qty": 7.0, "total": 410.0}, {"period": "week30(0720-0726)", "rate": 0.05429864253393665, "qty": 24.0, "total": 442.0}, {"period": "week31(0727-0802)", "rate": 0.025936599423631124, "qty": 9.0, "total": 347.0}], "color": "#dc2626"}, {"name": "其他问题", "points": [{"period": "week29(0713-0719)", "rate": 0.0, "qty": 0.0, "total": 410.0}, {"period": "week30(0720-0726)", "rate": 0.0, "qty": 0.0, "total": 442.0}, {"period": "week31(0727-0802)", "rate": 0.0, "qty": 0.0, "total": 347.0}], "color": "#059669"}], "wh_series": [{"name": "AMS", "points": [{"period": "week29(0713-0719)", "rate": 0.026865671641791045, "qty": 9.0, "total": 335.0}, {"period": "week30(0720-0726)", "rate": 0.056022408963585436, "qty": 20.0, "total": 357.0}, {"period": "week31(0727-0802)", "rate": 0.021021021021021023, "qty": 7.0, "total": 333.0}], "color": "#2563eb"}, {"name": "RTD", "points": [{"period": "week29(0713-0719)", "rate": 0.05714285714285714, "qty": 2.0, "total": 35.0}, {"period": "week30(0720-0726)", "rate": 0.21052631578947367, "qty": 8.0, "total": 38.0}, {"period": "week31(0727-0802)", "rate": 0.14285714285714285, "qty": 2.0, "total": 14.0}], "color": "#d97706"}, {"name": "ZTL", "points": [{"period": "week29(0713-0719)", "rate": 0.0, "qty": 0.0, "total": 40.0}, {"period": "week30(0720-0726)", "rate": 0.14893617021276595, "qty": 7.0, "total": 47.0}, {"period": "week31(0727-0802)", "rate": 0.0, "qty": 0.0, "total": 0}], "color": "#059669"}], "summ": {"total_qty": 9.0, "total_att": 347.0, "rate": 0.025936599423631124}, "latest": "week31(0727-0802)"}, {"name": "意大利", "periods": ["week29(0713-0719)", "week30(0720-0726)", "week31(0727-0802)"], "series": [{"name": "签到表上传错漏", "points": [{"period": "week29(0713-0719)", "rate": 0.0, "qty": 0.0, "total": 51.0}, {"period": "week30(0720-0726)", "rate": 0.0, "qty": 0.0, "total": 301.0}, {"period": "week31(0727-0802)", "rate": 0.0, "qty": 0.0, "total": 109.0}], "color": "#2563eb"}, {"name": "签到表模板/填写问题", "points": [{"period": "week29(0713-0719)", "rate": 0.0, "qty": 0.0, "total": 51.0}, {"period": "week30(0720-0726)", "rate": 0.006644518272425249, "qty": 2.0, "total": 301.0}, {"period": "week31(0727-0802)", "rate": 0.0, "qty": 0.0, "total": 109.0}], "color": "#d97706"}, {"name": "工具识别错误", "points": [{"period": "week29(0713-0719)", "rate": 0.0196078431372549, "qty": 1.0, "total": 51.0}, {"period": "week30(0720-0726)", "rate": 0.059800664451827246, "qty": 18.0, "total": 301.0}, {"period": "week31(0727-0802)", "rate": 0.07339449541284404, "qty": 8.0, "total": 109.0}], "color": "#dc2626"}, {"name": "其他问题", "points": [{"period": "week29(0713-0719)", "rate": 0.0, "qty": 0.0, "total": 51.0}, {"period": "week30(0720-0726)", "rate": 0.0, "qty": 0.0, "total": 301.0}, {"period": "week31(0727-0802)", "rate": 0.0, "qty": 0.0, "total": 109.0}], "color": "#059669"}], "wh_series": [{"name": "Bologna", "points": [{"period": "week29(0713-0719)", "rate": 0.0, "qty": 0.0, "total": 0}, {"period": "week30(0720-0726)", "rate": 0.0, "qty": 0.0, "total": 0}, {"period": "week31(0727-0802)", "rate": 0.0, "qty": 0.0, "total": 0}], "color": "#2563eb"}, {"name": "Milan", "points": [{"period": "week29(0713-0719)", "rate": 0.0196078431372549, "qty": 1.0, "total": 51.0}, {"period": "week30(0720-0726)", "rate": 0.010638297872340425, "qty": 2.0, "total": 188.0}, {"period": "week31(0727-0802)", "rate": 0.0, "qty": 0.0, "total": 0}], "color": "#d97706"}, {"name": "Roma", "points": [{"period": "week29(0713-0719)", "rate": 0.0, "qty": 0.0, "total": 0}, {"period": "week30(0720-0726)", "rate": 0.2463768115942029, "qty": 17.0, "total": 69.0}, {"period": "week31(0727-0802)", "rate": 0.0136986301369863, "qty": 1.0, "total": 73.0}], "color": "#059669"}, {"name": "Torino", "points": [{"period": "week29(0713-0719)", "rate": 0.0, "qty": 0.0, "total": 0}, {"period": "week30(0720-0726)", "rate": 0.029411764705882353, "qty": 1.0, "total": 34.0}, {"period": "week31(0727-0802)", "rate": 0.19444444444444445, "qty": 7.0, "total": 36.0}], "color": "#7c3aed"}, {"name": "padova", "points": [{"period": "week29(0713-0719)", "rate": 0.0, "qty": 0.0, "total": 0}, {"period": "week30(0720-0726)", "rate": 0.0, "qty": 0.0, "total": 10.0}, {"period": "week31(0727-0802)", "rate": 0.0, "qty": 0.0, "total": 0}], "color": "#db2777"}], "summ": {"total_qty": 8.0, "total_att": 109.0, "rate": 0.07339449541284404}, "latest": "week31(0727-0802)"}];
+
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function fmtPct(x) {
+  if (x == null) return '';
+  var p = x*100;
+  if (p === 0) return '0%';
+  if (p < 0.1) return p.toPrecision(3) + '%';
+  return p.toFixed(1) + '%';
+}
+function build(c, idx) {
+  var s = c.summ;
+  var el = document.createElement('div');
+  el.className = 'card';
+  el.innerHTML =
+    '<div class="head"><div class="titles">' +
+      '<span class="cn">'+esc(c.name)+'</span><span class="en">Attendance Error Rate Trend</span>' +
+    '</div>' +
+    '<div class="summ"><b>汇总 · '+esc(c.latest||'')+'</b><br>差错总量: '+s.total_qty+' 笔 &nbsp;|&nbsp; 考勤总数: '+s.total_att+' 笔<br>综合差错率: <span class="rate">'+fmtPct(s.rate)+'</span></div>' +
+    '</div>' +
+    '<div class="ch-row">' +
+      '<div class="ch-box"><div class="ch-title t-type">按差错类型</div><div class="chart" id="chart-'+idx+'a"></div></div>' +
+      '<div class="ch-box"><div class="ch-title t-wh">按仓库</div><div class="chart" id="chart-'+idx+'b"></div></div>' +
+    '</div>';
+  document.getElementById('grid').appendChild(el);
+
+  function mkTrace(s, series) {
+    var xs = [], ys = [], txt = [], cd = [];
+    c.periods.forEach(function(p) {
+      var pt = null;
+      for (var i = 0; i < series.points.length; i++) if (series.points[i] && series.points[i].period === p) { pt = series.points[i]; break; }
+      xs.push(p);
+      ys.push(pt ? +(pt.rate*100).toFixed(3) : null);
+      txt.push(pt ? fmtPct(pt.rate) : '');
+      cd.push(pt ? [pt.qty, pt.total, fmtPct(pt.rate)] : null);
+    });
+    return {
+      type:'scatter', mode:'lines+markers+text', name: esc(series.name),
+      x:xs, y:ys, text:txt, textposition:'top center', textfont:{size:10},
+      line:{width:2.5, color:series.color}, marker:{size:8, color:series.color, line:{width:1,color:'#fff'}},
+      customdata: cd,
+      hovertemplate:'<b>'+esc(series.name)+'</b><br>周期: %{x}<br>差错数量: %{customdata[0]}<br>考勤总数: %{customdata[1]}<br>差错率: %{customdata[2]}<extra></extra>'
+    };
+  }
+  var layout = {
+    margin:{l:48, r:12, t:14, b:40},
+    paper_bgcolor:'#fff', plot_bgcolor:'#fff',
+    font:{family:'Segoe UI, Microsoft YaHei, Arial', color:'#374151', size:11},
+    xaxis:{title:{text:'周期'}, gridcolor:'#f3f4f6', tickfont:{size:10}, automargin:true},
+    yaxis:{title:{text:'差错率(%)'}, gridcolor:'#f3f4f6', ticksuffix:'%',
+           tickformat:'.2~g', rangemode:'tozero', exponentformat:'none'},
+    legend:{orientation:'h', y:-0.28, x:0.5, xanchor:'center', font:{size:10}},
+    showlegend:true,
+    hovermode:'closest'
+  };
+  Plotly.newPlot('chart-'+idx+'a', c.series.map(function(s){return mkTrace(c,s);}), layout, {responsive:true, displaylogo:false});
+  Plotly.newPlot('chart-'+idx+'b', c.wh_series.map(function(s){return mkTrace(c,s);}), layout, {responsive:true, displaylogo:false});
+}
+CHARTS.forEach(build);
+</script>
+</body>
+</html>
