@@ -282,6 +282,12 @@ def fmt_rate(rate):
     return "%.1f%%" % pct
 
 
+def short_week(period):
+    """Shorten 'week28(0706-0712)' to 'week28' for summary labels."""
+    m = re.match(r"(week\d+)", period)
+    return m.group(1) if m else period
+
+
 def build_html(countries, src="week27"):
 
     def chart_section(name, data):
@@ -333,17 +339,27 @@ def build_html(countries, src="week27"):
                     }
                 )
             wh_series.append({"name": wh, "points": pts, "color": WH_COLORS[i % len(WH_COLORS)]})
-        # Summary text: use the "XX汇总" row when present, else the latest
-        # period's country aggregate (consistent with the per-week ledger).
+        # Summary text: aggregate the latest up-to-4 periods. When the summary
+        # sheet's "XX汇总" row is present it stays authoritative.
         summ = data["total_sum"]
         latest = periods[-1] if periods else None
         if summ is None and latest:
-            att = next(
-                (r["total"] for r in data["rows"].get(latest, {}).values()),
-                0,
-            )
-            tot_q = sum(r["qty"] for r in data["rows"].get(latest, {}).values())
-            summ = {"total_qty": tot_q, "total_att": att, "rate": (tot_q / att) if att else 0}
+            recent = periods[-4:]
+            tot_q = 0.0
+            tot_a = 0.0
+            for p in recent:
+                rows = data["rows"].get(p, {})
+                if not rows:
+                    continue
+                tot_q += sum(r["qty"] for r in rows.values())
+                tot_a += max(r["total"] for r in rows.values())
+            summ = {
+                "total_qty": tot_q,
+                "total_att": tot_a,
+                "rate": (tot_q / tot_a) if tot_a else 0,
+                "first": short_week(recent[0]),
+                "last": short_week(latest),
+            }
         return {
             "name": name,
             "periods": periods,
@@ -391,15 +407,22 @@ def build_html(countries, src="week27"):
         combined["qty"].append(q)
         combined["att"].append(a)
         combined["rate"].append(q / a if a else 0)
-    # Combined summary box uses the latest period across all countries.
-    li = combined["periods"].index(combined["latest"]) if combined["latest"] in combined["periods"] else -1
-    if li >= 0:
-        combined["latest_qty"] = combined["qty"][li]
-        combined["latest_att"] = combined["att"][li]
-        combined["latest_rate"] = combined["rate"][li]
-    else:
-        combined["latest_qty"] = combined["latest_att"] = 0
-        combined["latest_rate"] = 0
+    # Combined summary box: aggregate the latest up-to-4 periods across all
+    # countries.
+    recent = all_periods[-4:]
+    cq = ca = 0.0
+    for p in recent:
+        for data in countries.values():
+            rows = data["rows"].get(p, {})
+            if not rows:
+                continue
+            cq += sum(r["qty"] for r in rows.values())
+            ca += max(r["total"] for r in rows.values())
+    combined["latest_qty"] = cq
+    combined["latest_att"] = ca
+    combined["latest_rate"] = cq / ca if ca else 0
+    combined["first"] = short_week(recent[0]) if recent else ""
+    combined["last"] = short_week(all_periods[-1]) if all_periods else ""
     charts_json = "var CHARTS = " + json_dumps(charts) + ";\n"
     combined_json = "var COMBINED = " + json_dumps(combined) + ";\n"
     return (
@@ -493,7 +516,7 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
 </div>
 <footer>
   <b>说明：</b>“差错率”= 差错数量 ÷ 考勤总数 × 100%，数值已标注于各数据点上方；悬停数据点可查看对应周期与维度的<b>差错数量</b>与<b>考勤总数</b>。<br/>
-  左图按<b>差错类型</b>着色（签到表上传错漏 / 签到表模板/填写问题 / 工具识别错误 / 其他问题），右图按<b>仓库</b>着色。卡片右上角汇总框展示该国最近一期的<b>差错总量 / 考勤总数 / 综合差错率</b>。数据来自两份台账（各国综合台账 + week27 台账），按日期范围去重合并。部分周期台账未记录差错数据，图中仅显示有记录的周期。
+  左图按<b>差错类型</b>着色（签到表上传错漏 / 签到表模板/填写问题 / 工具识别错误 / 其他问题），右图按<b>仓库</b>着色。卡片右上角汇总框展示该国最近四周（不足四周按实际）的<b>差错总量 / 考勤总数 / 综合差错率</b>。数据来自两份台账（各国综合台账 + week27 台账），按日期范围去重合并。部分周期台账未记录差错数据，图中仅显示有记录的周期。
 </footer>
 <script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
 <script>
@@ -515,7 +538,7 @@ function build(c, idx) {
     '<div class="head"><div class="titles">' +
       '<span class="cn">'+esc(c.name)+'</span><span class="en">Attendance Error Rate Trend</span>' +
     '</div>' +
-    '<div class="summ"><b>汇总 · '+esc(c.latest||'')+'</b><br>差错总量: '+s.total_qty+' 笔 &nbsp;|&nbsp; 考勤总数: '+s.total_att+' 笔<br>综合差错率: <span class="rate">'+fmtPct(s.rate)+'</span></div>' +
+    '<div class="summ"><b>'+esc(s.first||'')+'~'+esc(s.last||'')+' 汇总</b><br>差错总量: '+s.total_qty+' 笔 &nbsp;|&nbsp; 考勤总数: '+s.total_att+' 笔<br>综合差错率: <span class="rate">'+fmtPct(s.rate)+'</span></div>' +
     '</div>' +
     '<div class="ch-row">' +
       '<div class="ch-box"><div class="ch-title t-type">按差错类型</div><div class="chart" id="chart-'+idx+'a"></div></div>' +
@@ -562,7 +585,7 @@ function buildCombined() {
   var col = {法国:'#2563eb', 荷兰:'#d97706', 意大利:'#059669'};
   // Summary box: latest period across all countries.
   var s = document.getElementById('summ-combined');
-  s.innerHTML = '<b>汇总 · '+esc(c.latest)+'</b><br>差错总量: '+c.latest_qty+' 笔 &nbsp;|&nbsp; 考勤总数: '+c.latest_att+' 笔<br>综合差错率: <span class="rate">'+fmtPct(c.latest_rate)+'</span>';
+  s.innerHTML = '<b>'+esc(c.first||'')+'~'+esc(c.last||'')+' 汇总</b><br>差错总量: '+c.latest_qty+' 笔 &nbsp;|&nbsp; 考勤总数: '+c.latest_att+' 笔<br>综合差错率: <span class="rate">'+fmtPct(c.latest_rate)+'</span>';
   var traces = [];
   // Grouped bars: one bar per country per period (差错总量).
   cns.forEach(function(n, i) {
