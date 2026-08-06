@@ -120,7 +120,8 @@ function build(c, idx) {
     return {
       type:'scatter', mode:'lines+markers+text', name: esc(series.name),
       x:xs, y:ys, text:txt, textposition:'top center', textfont:{size:10},
-      line:{width:2.5, color:series.color}, marker:{size:8, color:series.color, line:{width:1,color:'#fff'}},
+      line:{width:2.5, shape:'spline', smoothing:0.8, color:series.color},
+      marker:{size:8, color:series.color, line:{width:1,color:'#fff'}},
       customdata: cd,
       hovertemplate:'<b>'+esc(series.name)+'</b><br>周期: %{x}<br>差错数量: %{customdata[0]}<br>考勤总数: %{customdata[1]}<br>差错率: %{customdata[2]}<extra></extra>'
     };
@@ -160,15 +161,17 @@ function buildCombined() {
       hovertemplate:'<b>'+esc(n)+'</b><br>周期: %{x}<br>差错总量: %{y} 笔<extra></extra>'
     });
   });
-  // Per-country 差错率 lines on the secondary axis.
+  // Per-country 差错率 lines on the secondary axis (new color set, solid spline).
+  var lineCol = ['#7c3aed', '#db2777', '#0891b2'];
   cns.forEach(function(n, i) {
     var ys = c.rate_by_country[n];
+    var lc = lineCol[i % lineCol.length];
     traces.push({
       type:'scatter', mode:'lines+markers', name: esc(n)+'差错率',
       x:c.periods, y:ys.map(function(r){ return r==null ? null : +(r*100).toFixed(3); }),
       yaxis:'y2',
-      line:{width:2.5, dash:'dot', color:col[n]||WH_COLORS[i%WH_COLORS.length]},
-      marker:{size:7, color:col[n]||WH_COLORS[i%WH_COLORS.length], line:{width:1,color:'#fff'}},
+      line:{width:3, shape:'spline', smoothing:0.8, color:lc},
+      marker:{size:7, color:lc, line:{width:1,color:'#fff'}},
       text:ys.map(function(r){ return r==null ? '' : fmtPct(r); }),
       textposition:'top center', textfont:{size:9, color:'#6b7280'},
       customdata:ys.map(function(r,i2){
