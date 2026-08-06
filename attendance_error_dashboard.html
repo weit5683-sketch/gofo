@@ -148,7 +148,7 @@ function buildCombined() {
   var s = document.getElementById('summ-combined');
   s.innerHTML = '<b>'+esc(c.first||'')+'~'+esc(c.last||'')+' 汇总</b><br>差错总量: '+c.latest_qty+' 笔 &nbsp;|&nbsp; 考勤总数: '+c.latest_att+' 笔<br>综合差错率: <span class="rate">'+fmtPct(c.latest_rate)+'</span>';
   var traces = [];
-  // Grouped bars: one bar per country per period (差错总量).
+  // Stacked bars: 差错总量 per country per period.
   cns.forEach(function(n, i) {
     var ys = c.by_country[n];
     traces.push({
@@ -156,7 +156,7 @@ function buildCombined() {
       x:c.periods, y:ys,
       marker:{color:col[n]||WH_COLORS[i%WH_COLORS.length]},
       text:ys.map(function(v){ return v>0 ? String(v) : ''; }),
-      textposition:'outside', textfont:{size:9, color:'#6b7280'},
+      textposition:'inside', textfont:{size:9, color:'#fff'},
       hovertemplate:'<b>'+esc(n)+'</b><br>周期: %{x}<br>差错总量: %{y} 笔<extra></extra>'
     });
   });
@@ -185,7 +185,7 @@ function buildCombined() {
     yaxis:{title:{text:'差错总量(笔)'}, gridcolor:'#f3f4f6', rangemode:'tozero'},
     yaxis2:{title:{text:'差错率(%)'}, overlaying:'y', side:'right', ticksuffix:'%',
             tickformat:'.2~g', rangemode:'tozero', gridcolor:'rgba(0,0,0,0)'},
-    barmode:'group',
+    barmode:'stack',
     legend:{orientation:'h', y:-0.28, x:0.5, xanchor:'center', font:{size:10}},
     hovermode:'closest'
   };
