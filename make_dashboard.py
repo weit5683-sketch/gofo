@@ -64,9 +64,10 @@ def find_files():
     """Return (consolidated_ledger, [other_ledgers]) workbooks.
 
     The consolidated multi-week ledger (各国) is authoritative; any additional
-    week files (week27) may carry earlier periods not yet consolidated.
+    week files (week27) may carry earlier periods not yet consolidated. When
+    several "各国" files exist, the "(1)" copy is treated as the newest update.
     """
-    cons = pats_glob = glob.glob(os.path.join(BASE_DIR, "*各国*.xlsx"))
+    cons = glob.glob(os.path.join(BASE_DIR, "*各国*.xlsx"))
     others = glob.glob(os.path.join(BASE_DIR, "*week27*.xlsx"))
     results = []
     for p in cons + others:
@@ -75,15 +76,22 @@ def find_files():
         except Exception:
             continue
         if any("汇总" in str(s) for s in xl.sheet_names):
-            results.append(xl)
+            results.append((p, xl))
     if not results:
         raise SystemExit("No matching workbook found in %s" % BASE_DIR)
-    return results[0], results[1:]
+    # Prefer the newest consolidated file: "(1)" over the base name.
+    def sort_key(item):
+        p = os.path.basename(item[0]).lower()
+        return (0 if "各国" in p else 1, 0 if " (1)" in p else 1)
+    results.sort(key=sort_key)
+    return results[0][1], [xl for _, xl in results[1:]]
 
 
 def parse_detail_sheets(xl):
     """Read the per-country detail sheets into (country, warehouse, period,
-    date, type, qty, total) rows."""
+    date, type, qty, total) rows. Warehouse names are normalized to lowercase
+    so spelling-case differences (e.g. 'PADOVA' vs 'padova') collapse.
+    """
     records = []
     for sheet_name, cname in (("法国", "法国"), ("荷兰", "荷兰"), ("意大利", "意大利")):
         if sheet_name not in xl.sheet_names:
@@ -92,10 +100,12 @@ def parse_detail_sheets(xl):
         for _, r in df.iterrows():
             if not isinstance(r["周期"], str):
                 continue
+            wh = (str(r["仓库名称"]).strip() if isinstance(r["仓库名称"], str) else "")
             records.append(
                 {
                     "country": cname,
-                    "wh": (str(r["仓库名称"]).strip() if isinstance(r["仓库名称"], str) else ""),
+                    "wh": wh.lower(),
+                    "wh_disp": wh,
                     "period": r["周期"].strip(),
                     "pkey": period_key(r["周期"].strip()),
                     "date": pd.Timestamp(r["考勤日期"]) if pd.notna(r.get("考勤日期")) else None,
@@ -112,7 +122,8 @@ def warehouse_roster(xls):
 
     The 仓库 column lists every warehouse a country tracks (regardless of
     whether that week had data), so the warehouse chart legend can show all of
-    them, not just the ones with recorded errors.
+    them, not just the ones with recorded errors. Returns {country: {lower_name:
+    display_name}} so case variants collapse to one canonical spelling.
     """
     roster = {}
     for xl in xls:
@@ -133,7 +144,10 @@ def warehouse_roster(xls):
             if isinstance(wh, str):
                 wh = wh.strip()
                 if wh and wh != "/" and not wh.endswith("汇总"):
-                    roster.setdefault(cur, set()).add(wh)
+                    m = roster.setdefault(cur, {})
+                    # Prefer the original summary spelling (e.g. 'padova').
+                    if wh.lower() not in m:
+                        m[wh.lower()] = wh
     return roster
 
 
@@ -209,6 +223,13 @@ def build_country_data(all_records, wh_roster=None):
         if wh_roster:
             seen_wh |= set(wh_roster.get(cname, ()))
         cnt["wh_all"] = sorted(seen_wh)
+        # Display names: prefer the roster spelling, else the data spelling.
+        disp = {}
+        if wh_roster:
+            disp = dict(wh_roster.get(cname, {}))
+        for w in seen_wh:
+            disp.setdefault(w, w)
+        cnt["wh_disp"] = {k: disp[k] for k in cnt["wh_all"]}
         cnt["periods"] = sorted(set(cnt["periods"]))
     return countries
 
@@ -322,6 +343,7 @@ def build_html(countries, src="week27"):
         wh_names = data.get("wh_all") or sorted(set(
             w for p in periods for w in data["wh_rows"].get(p, {}).keys()
         ))
+        disp = data.get("wh_disp") or {}
         wh_series = []
         for i, wh in enumerate(wh_names):
             pts = []
@@ -338,7 +360,7 @@ def build_html(countries, src="week27"):
                         "total": row["total"],
                     }
                 )
-            wh_series.append({"name": wh, "points": pts, "color": WH_COLORS[i % len(WH_COLORS)]})
+            wh_series.append({"name": disp.get(wh, wh), "points": pts, "color": WH_COLORS[i % len(WH_COLORS)]})
         # Summary text: aggregate the latest up-to-4 periods. When the summary
         # sheet's "XX汇总" row is present it stays authoritative.
         summ = data["total_sum"]
