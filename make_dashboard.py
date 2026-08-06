@@ -354,14 +354,15 @@ def build_html(countries, src="week27"):
         }
 
     charts = [chart_section(name, data) for name, data in countries.items()]
-    # Combined overview across all countries: per-period stacked bars by
-    # country (差错总量) plus an overall 差错率 line, and a summary box for the
-    # latest period across all countries.
+    # Combined overview across all countries: grouped bars by country (差错总量)
+    # plus per-country 差错率 lines, and a summary box for the latest period
+    # across all countries.
     all_periods = sorted({p for c in countries.values() for p in c["periods"]})
     combined = {
         "periods": all_periods,
         "countries": [c["name"] for c in charts],
         "by_country": {},
+        "rate_by_country": {},
         "rate": [],
         "qty": [],
         "att": [],
@@ -371,6 +372,15 @@ def build_html(countries, src="week27"):
         combined["by_country"][cname] = [
             sum(r["qty"] for r in data["rows"].get(p, {}).values()) for p in all_periods
         ]
+        combined["rate_by_country"][cname] = []
+        for p in all_periods:
+            rows = data["rows"].get(p, {})
+            if not rows:
+                combined["rate_by_country"][cname].append(None)
+                continue
+            q = sum(r["qty"] for r in rows.values())
+            a = max(r["total"] for r in rows.values())
+            combined["rate_by_country"][cname].append(q / a if a else 0)
     for p in all_periods:
         q = sum(combined["by_country"][cn][all_periods.index(p)] for cn in combined["countries"])
         a = 0.0
@@ -475,7 +485,7 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
 <div class="grid" id="grid">
   <div class="card" id="card-combined">
     <div class="head">
-      <div class="titles"><span class="cn">三国差错总量与差错率总览</span><span class="en">France · Netherlands · Italy</span></div>
+      <div class="titles"><span class="cn">GEU各区域差错总量与差错率总览</span><span class="en">GEU Overview</span></div>
       <div class="summ" id="summ-combined"></div>
     </div>
     <div class="chart chart-top" id="chart-combined"></div>
@@ -553,27 +563,35 @@ function buildCombined() {
   // Summary box: latest period across all countries.
   var s = document.getElementById('summ-combined');
   s.innerHTML = '<b>汇总 · '+esc(c.latest)+'</b><br>差错总量: '+c.latest_qty+' 笔 &nbsp;|&nbsp; 考勤总数: '+c.latest_att+' 笔<br>综合差错率: <span class="rate">'+fmtPct(c.latest_rate)+'</span>';
-  // Stacked bars: 差错总量 per country per period; line: overall 差错率.
-  var traces = cns.map(function(n, i) {
+  var traces = [];
+  // Grouped bars: one bar per country per period (差错总量).
+  cns.forEach(function(n, i) {
     var ys = c.by_country[n];
-    return {
+    traces.push({
       type:'bar', name: esc(n),
       x:c.periods, y:ys,
       marker:{color:col[n]||WH_COLORS[i%WH_COLORS.length]},
       text:ys.map(function(v){ return v>0 ? String(v) : ''; }),
-      textposition:'inside', textfont:{size:10, color:'#fff'},
+      textposition:'outside', textfont:{size:9, color:'#6b7280'},
       hovertemplate:'<b>'+esc(n)+'</b><br>周期: %{x}<br>差错总量: %{y} 笔<extra></extra>'
-    };
+    });
   });
-  traces.push({
-    type:'scatter', mode:'lines+markers', name:'综合差错率',
-    x:c.periods, y:c.rate.map(function(r){return +(r*100).toFixed(3);}),
-    yaxis:'y2',
-    line:{width:3, color:'#7c3aed'},
-    marker:{size:8, color:'#7c3aed', line:{width:1,color:'#fff'}},
-    text:c.rate.map(fmtPct), textposition:'top center', textfont:{size:10, color:'#7c3aed'},
-    customdata:c.rate.map(function(r,i){ return [fmtPct(r), c.qty[i], c.att[i]]; }),
-    hovertemplate:'<b>综合差错率</b><br>周期: %{x}<br>差错率: %{customdata[0]}<br>差错总量: %{customdata[1]} 笔<br>考勤总数: %{customdata[2]} 笔<extra></extra>'
+  // Per-country 差错率 lines on the secondary axis.
+  cns.forEach(function(n, i) {
+    var ys = c.rate_by_country[n];
+    traces.push({
+      type:'scatter', mode:'lines+markers', name: esc(n)+'差错率',
+      x:c.periods, y:ys.map(function(r){ return r==null ? null : +(r*100).toFixed(3); }),
+      yaxis:'y2',
+      line:{width:2.5, dash:'dot', color:col[n]||WH_COLORS[i%WH_COLORS.length]},
+      marker:{size:7, color:col[n]||WH_COLORS[i%WH_COLORS.length], line:{width:1,color:'#fff'}},
+      text:ys.map(function(r){ return r==null ? '' : fmtPct(r); }),
+      textposition:'top center', textfont:{size:9, color:'#6b7280'},
+      customdata:ys.map(function(r,i2){
+        return r==null ? null : [fmtPct(r), c.by_country[n][i2], c.att[i2]];
+      }),
+      hovertemplate:'<b>'+esc(n)+' 差错率</b><br>周期: %{x}<br>差错率: %{customdata[0]}<br>差错总量: %{customdata[1]} 笔<br>考勤总数: %{customdata[2]} 笔<extra></extra>'
+    });
   });
   var layout = {
     margin:{l:48, r:44, t:14, b:40},
@@ -583,7 +601,7 @@ function buildCombined() {
     yaxis:{title:{text:'差错总量(笔)'}, gridcolor:'#f3f4f6', rangemode:'tozero'},
     yaxis2:{title:{text:'差错率(%)'}, overlaying:'y', side:'right', ticksuffix:'%',
             tickformat:'.2~g', rangemode:'tozero', gridcolor:'rgba(0,0,0,0)'},
-    barmode:'stack',
+    barmode:'group',
     legend:{orientation:'h', y:-0.28, x:0.5, xanchor:'center', font:{size:10}},
     hovermode:'closest'
   };
