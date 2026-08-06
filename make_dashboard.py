@@ -354,9 +354,47 @@ def build_html(countries, src="week27"):
         }
 
     charts = [chart_section(name, data) for name, data in countries.items()]
+    # Combined overview across all countries: per-period stacked bars by
+    # country (差错总量) plus an overall 差错率 line, and a summary box for the
+    # latest period across all countries.
+    all_periods = sorted({p for c in countries.values() for p in c["periods"]})
+    combined = {
+        "periods": all_periods,
+        "countries": [c["name"] for c in charts],
+        "by_country": {},
+        "rate": [],
+        "qty": [],
+        "att": [],
+        "latest": all_periods[-1] if all_periods else "",
+    }
+    for cname, data in countries.items():
+        combined["by_country"][cname] = [
+            sum(r["qty"] for r in data["rows"].get(p, {}).values()) for p in all_periods
+        ]
+    for p in all_periods:
+        q = sum(combined["by_country"][cn][all_periods.index(p)] for cn in combined["countries"])
+        a = 0.0
+        for data in countries.values():
+            rows = data["rows"].get(p, {})
+            if rows:
+                a += max(r["total"] for r in rows.values())
+        combined["qty"].append(q)
+        combined["att"].append(a)
+        combined["rate"].append(q / a if a else 0)
+    # Combined summary box uses the latest period across all countries.
+    li = combined["periods"].index(combined["latest"]) if combined["latest"] in combined["periods"] else -1
+    if li >= 0:
+        combined["latest_qty"] = combined["qty"][li]
+        combined["latest_att"] = combined["att"][li]
+        combined["latest_rate"] = combined["rate"][li]
+    else:
+        combined["latest_qty"] = combined["latest_att"] = 0
+        combined["latest_rate"] = 0
     charts_json = "var CHARTS = " + json_dumps(charts) + ";\n"
+    combined_json = "var COMBINED = " + json_dumps(combined) + ";\n"
     return (
         HTML_TEMPLATE.replace("@@CHARTS@@", charts_json)
+        .replace("@@COMBINED@@", combined_json)
         .replace("@@SOURCE@@", src)
         .replace("@@ERROR_TYPES@@", " / ".join(ERROR_TYPES))
     )
@@ -420,6 +458,7 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
   .ch-title.t-type { color:var(--accent); }
   .ch-title.t-wh { color:#d97706; }
   .chart { width:100%; height:440px; }
+  .chart-top { height:360px; margin-top:4px; }
   footer {
     max-width:1200px; margin:18px auto 0; color:var(--muted);
     font-size:12px; line-height:1.7;
@@ -433,7 +472,15 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
   <div class="sub">数据来源：GEU AI考勤工具考勤纠错台账（法国 / 荷兰 / 意大利）｜按“国家”分别展示</div>
   <div class="legend-hint">每国两图：左图按差错类型着色，右图按仓库着色 · 横轴 = 周期 · 纵轴 = 差错率(%) · 悬停数据点可查看差错数量与考勤总数</div>
 </header>
-<div class="grid" id="grid"></div>
+<div class="grid" id="grid">
+  <div class="card" id="card-combined">
+    <div class="head">
+      <div class="titles"><span class="cn">三国差错总量与差错率总览</span><span class="en">France · Netherlands · Italy</span></div>
+      <div class="summ" id="summ-combined"></div>
+    </div>
+    <div class="chart chart-top" id="chart-combined"></div>
+  </div>
+</div>
 <footer>
   <b>说明：</b>“差错率”= 差错数量 ÷ 考勤总数 × 100%，数值已标注于各数据点上方；悬停数据点可查看对应周期与维度的<b>差错数量</b>与<b>考勤总数</b>。<br/>
   左图按<b>差错类型</b>着色（签到表上传错漏 / 签到表模板/填写问题 / 工具识别错误 / 其他问题），右图按<b>仓库</b>着色。卡片右上角汇总框展示该国最近一期的<b>差错总量 / 考勤总数 / 综合差错率</b>。数据来自两份台账（各国综合台账 + week27 台账），按日期范围去重合并。部分周期台账未记录差错数据，图中仅显示有记录的周期。
@@ -441,6 +488,7 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
 <script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
 <script>
 @@CHARTS@@
+@@COMBINED@@
 function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 function fmtPct(x) {
   if (x == null) return '';
@@ -497,6 +545,51 @@ function build(c, idx) {
   Plotly.newPlot('chart-'+idx+'a', c.series.map(function(s){return mkTrace(c,s);}), layout, {responsive:true, displaylogo:false});
   Plotly.newPlot('chart-'+idx+'b', c.wh_series.map(function(s){return mkTrace(c,s);}), layout, {responsive:true, displaylogo:false});
 }
+
+function buildCombined() {
+  var c = COMBINED;
+  var cns = c.countries;
+  var col = {法国:'#2563eb', 荷兰:'#d97706', 意大利:'#059669'};
+  // Summary box: latest period across all countries.
+  var s = document.getElementById('summ-combined');
+  s.innerHTML = '<b>汇总 · '+esc(c.latest)+'</b><br>差错总量: '+c.latest_qty+' 笔 &nbsp;|&nbsp; 考勤总数: '+c.latest_att+' 笔<br>综合差错率: <span class="rate">'+fmtPct(c.latest_rate)+'</span>';
+  // Stacked bars: 差错总量 per country per period; line: overall 差错率.
+  var traces = cns.map(function(n, i) {
+    var ys = c.by_country[n];
+    return {
+      type:'bar', name: esc(n),
+      x:c.periods, y:ys,
+      marker:{color:col[n]||WH_COLORS[i%WH_COLORS.length]},
+      text:ys.map(function(v){ return v>0 ? String(v) : ''; }),
+      textposition:'inside', textfont:{size:10, color:'#fff'},
+      hovertemplate:'<b>'+esc(n)+'</b><br>周期: %{x}<br>差错总量: %{y} 笔<extra></extra>'
+    };
+  });
+  traces.push({
+    type:'scatter', mode:'lines+markers', name:'综合差错率',
+    x:c.periods, y:c.rate.map(function(r){return +(r*100).toFixed(3);}),
+    yaxis:'y2',
+    line:{width:3, color:'#7c3aed'},
+    marker:{size:8, color:'#7c3aed', line:{width:1,color:'#fff'}},
+    text:c.rate.map(fmtPct), textposition:'top center', textfont:{size:10, color:'#7c3aed'},
+    customdata:c.rate.map(function(r,i){ return [fmtPct(r), c.qty[i], c.att[i]]; }),
+    hovertemplate:'<b>综合差错率</b><br>周期: %{x}<br>差错率: %{customdata[0]}<br>差错总量: %{customdata[1]} 笔<br>考勤总数: %{customdata[2]} 笔<extra></extra>'
+  });
+  var layout = {
+    margin:{l:48, r:44, t:14, b:40},
+    paper_bgcolor:'#fff', plot_bgcolor:'#fff',
+    font:{family:'Segoe UI, Microsoft YaHei, Arial', color:'#374151', size:11},
+    xaxis:{title:{text:'周期'}, gridcolor:'#f3f4f6', tickfont:{size:10}, automargin:true},
+    yaxis:{title:{text:'差错总量(笔)'}, gridcolor:'#f3f4f6', rangemode:'tozero'},
+    yaxis2:{title:{text:'差错率(%)'}, overlaying:'y', side:'right', ticksuffix:'%',
+            tickformat:'.2~g', rangemode:'tozero', gridcolor:'rgba(0,0,0,0)'},
+    barmode:'stack',
+    legend:{orientation:'h', y:-0.28, x:0.5, xanchor:'center', font:{size:10}},
+    hovermode:'closest'
+  };
+  Plotly.newPlot('chart-combined', traces, layout, {responsive:true, displaylogo:false});
+}
+buildCombined();
 CHARTS.forEach(build);
 </script>
 </body>
