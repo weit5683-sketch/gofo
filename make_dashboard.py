@@ -10,6 +10,7 @@ with one interactive chart per country:
   - percentage labels on every point; hover shows 差错数量 and 考勤总数
   - summary text box at the top-right of each chart
 """
+import argparse
 import glob
 import os
 import re
@@ -60,15 +61,16 @@ def period_key(period):
     return period
 
 
-def find_files():
+def find_files(base_dir=BASE_DIR):
     """Return (consolidated_ledger, [other_ledgers]) workbooks.
 
     The consolidated multi-week ledger (各国) is authoritative; any additional
     week files (week27) may carry earlier periods not yet consolidated. When
-    several "各国" files exist, the "(1)" copy is treated as the newest update.
+    several "各国" files exist, the highest "(N)" copy is treated as the newest
+    update (e.g. "(2)" newer than "(1)" newer than the base name).
     """
-    cons = glob.glob(os.path.join(BASE_DIR, "*各国*.xlsx"))
-    others = glob.glob(os.path.join(BASE_DIR, "*week27*.xlsx"))
+    cons = glob.glob(os.path.join(base_dir, "*各国*.xlsx"))
+    others = glob.glob(os.path.join(base_dir, "*week27*.xlsx"))
     results = []
     for p in cons + others:
         try:
@@ -78,11 +80,16 @@ def find_files():
         if any("汇总" in str(s) for s in xl.sheet_names):
             results.append((p, xl))
     if not results:
-        raise SystemExit("No matching workbook found in %s" % BASE_DIR)
-    # Prefer the newest consolidated file: "(1)" over the base name.
+        raise SystemExit("No matching workbook found in %s" % base_dir)
+
+    # Prefer the newest consolidated file: highest "(N)" over the base name.
+    def copy_no(p):
+        m = re.search(r"\((\d+)\)", os.path.basename(p))
+        return int(m.group(1)) if m else 0
+
     def sort_key(item):
         p = os.path.basename(item[0]).lower()
-        return (0 if "各国" in p else 1, 0 if " (1)" in p else 1)
+        return (0 if "各国" in p else 1, -copy_no(item[0]))
     results.sort(key=sort_key)
     return results[0][1], [xl for _, xl in results[1:]]
 
@@ -664,7 +671,14 @@ CHARTS.forEach(build);
 
 
 def main():
-    cons, others = find_files()
+    parser = argparse.ArgumentParser(description="Build GEU attendance-error dashboard.")
+    parser.add_argument("--data-dir", default=os.environ.get("GEU_DATA_DIR", BASE_DIR),
+                        help="Folder holding the ledger xlsx files (default: %(default)s)")
+    parser.add_argument("--out", default=None,
+                        help="Output HTML path (default: <script dir>/attendance_error_dashboard.html)")
+    args = parser.parse_args()
+
+    cons, others = find_files(args.data_dir)
     all_xls = [cons] + others
     records = parse_detail_sheets(cons)
     # Other (week) files may duplicate date ranges already covered by the
@@ -679,7 +693,7 @@ def main():
     countries = build_country_data(records, wh_roster=roster)
     overlay_summary(cons, countries)
     html = build_html(countries, src="multi-week")
-    out = os.path.join(OUT_DIR, "attendance_error_dashboard.html")
+    out = args.out or os.path.join(OUT_DIR, "attendance_error_dashboard.html")
     with open(out, "w", encoding="utf-8") as f:
         f.write(html)
     print("Wrote", out)
