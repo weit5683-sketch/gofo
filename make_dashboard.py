@@ -66,8 +66,9 @@ def find_files(base_dir=BASE_DIR):
 
     The consolidated multi-week ledger (各国) is authoritative; any additional
     week files (week27) may carry earlier periods not yet consolidated. When
-    several "各国" files exist, the highest "(N)" copy is treated as the newest
-    update (e.g. "(2)" newer than "(1)" newer than the base name).
+    several "各国" files exist, the highest version is treated as newest: a
+    base name has version 0, "(N)" has version N, and extra parenthesised
+    numbers (e.g. "(3)(1)") act as a revision suffix so it beats "(3)".
     """
     cons = glob.glob(os.path.join(base_dir, "*各国*.xlsx"))
     others = glob.glob(os.path.join(base_dir, "*week27*.xlsx"))
@@ -82,14 +83,16 @@ def find_files(base_dir=BASE_DIR):
     if not results:
         raise SystemExit("No matching workbook found in %s" % base_dir)
 
-    # Prefer the newest consolidated file: highest "(N)" over the base name.
-    def copy_no(p):
-        m = re.search(r"\((\d+)\)", os.path.basename(p))
-        return int(m.group(1)) if m else 0
+    # Version key: all parenthesised numbers in order, e.g. (3)(1) -> (3, 1),
+    # base name -> (). Comparisons fall back to the revision tuple length so
+    # (3)(1) sorts as newer than (3).
+    def version_key(p):
+        nums = [int(x) for x in re.findall(r"\((\d+)\)", os.path.basename(p))]
+        return (tuple(nums), len(nums))
 
     def sort_key(item):
         p = os.path.basename(item[0]).lower()
-        return (0 if "各国" in p else 1, -copy_no(item[0]))
+        return (0 if "各国" in p else 1, version_key(item[0]))
     results.sort(key=sort_key)
     return results[0][1], [xl for _, xl in results[1:]]
 
