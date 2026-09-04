@@ -64,11 +64,10 @@ def period_key(period):
 def find_files(base_dir=BASE_DIR):
     """Return (consolidated_ledger, [other_ledgers]) workbooks.
 
-    The consolidated multi-week ledger (各国) is authoritative; any additional
-    week files (week27) may carry earlier periods not yet consolidated. When
-    several "各国" files exist, the highest version is treated as newest: a
-    base name has version 0, "(N)" has version N, and extra parenthesised
-    numbers (e.g. "(3)(1)") act as a revision suffix so it beats "(3)".
+    The newest "各国" workbook (highest version number, e.g. (4) > (3)(1) > (3)
+    > (1) > base name) is the authoritative consolidated ledger. All older
+    "各国" copies and any week27 files are returned as supplements; overlapping
+    periods are skipped by the caller so only genuinely missing data is added.
     """
     cons = glob.glob(os.path.join(base_dir, "*各国*.xlsx"))
     others = glob.glob(os.path.join(base_dir, "*week27*.xlsx"))
@@ -90,11 +89,15 @@ def find_files(base_dir=BASE_DIR):
         nums = [int(x) for x in re.findall(r"\((\d+)\)", os.path.basename(p))]
         return (tuple(nums), len(nums))
 
-    def sort_key(item):
-        p = os.path.basename(item[0]).lower()
-        return (0 if "各国" in p else 1, version_key(item[0]))
-    results.sort(key=sort_key)
-    return results[0][1], [xl for _, xl in results[1:]]
+    is_ge = [item for item in results if "各国" in os.path.basename(item[0])]
+    # Newest "各国" workbook is the primary source.
+    is_ge.sort(key=lambda item: version_key(item[0]), reverse=True)
+    primary, *rest = is_ge
+    others_xls = [xl for _, xl in rest]
+    for p, xl in results:
+        if not ("各国" in os.path.basename(p)):
+            others_xls.append(xl)
+    return primary[1], others_xls
 
 
 def parse_detail_sheets(xl):
