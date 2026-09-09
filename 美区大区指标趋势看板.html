@@ -58,12 +58,12 @@
   .phead .yd{color:var(--ink2);font-size:11.5px}
   .phead .pd{color:var(--muted);font-size:11px;margin-left:auto;text-align:right}
   .hscroll{overflow-x:auto;overflow-y:hidden;padding:2px 8px 2px}
-  .chartw{min-width:900px;height:400px}
-  #avgbox{position:absolute;top:38px;right:14px;z-index:6;background:color-mix(in srgb,var(--surface) 92%, transparent);
-    border:1px solid var(--ring);border-radius:10px;padding:7px 11px;font-size:11.5px;line-height:1.8;display:none;max-width:250px}
-  #avgbox .t{color:var(--muted);margin-bottom:2px}
-  #avgbox .row{display:flex;justify-content:space-between;gap:10px}
-  #avgbox .row b{font-variant-numeric:tabular-nums}
+  .chartw{min-width:0;height:400px}
+  #avgbox{position:absolute;top:38px;right:14px;z-index:6;background:color-mix(in srgb,var(--surface) 94%, transparent);
+    border:1px solid var(--ring);border-radius:10px;padding:8px 12px;font-size:12px;line-height:2;display:none;max-width:260px}
+  #avgbox .t{color:var(--ink);font-weight:750;margin-bottom:3px;font-size:12.5px;letter-spacing:.3px}
+  #avgbox .row{display:flex;justify-content:space-between;gap:14px}
+  #avgbox .row b{font-variant-numeric:tabular-nums;font-weight:800}
   .legbox{display:flex;flex-wrap:wrap;gap:6px 9px;align-items:center;padding:9px 16px 3px}
   .legbox .lg{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;color:var(--ink2);
     border:1px solid var(--ring);background:var(--surface);border-radius:999px;padding:2px 10px 2px 8px;cursor:pointer;user-select:none}
@@ -297,7 +297,14 @@ function paintMain(){
   const mt=metricMeta(), p=currentPeriod();
   const inc=keptIdx();                       // 参与绘制的数据日(在区间内，且可选跳过周末)
   const el=document.querySelector('#main');
-  const w=Math.max(900, inc.length*34 + 60);
+  /* 宽度：全期保持“宽时间轴可左右拖动”（按 34px/点 展开）；月/双周/近7天铺满页面可用宽度 */
+  let w;
+  if(state.timeKind==='all'){
+    w = inc.length*34 + 60;
+  } else {
+    const avail = ($('#mainScroll') && $('#mainScroll').clientWidth) || 900;
+    w = Math.max(avail, inc.length*26 + 60);
+  }
   el.style.width=w+'px';
   const X = inc.map((_,j)=>j);               // 等距索引 → 周末被排除后自动跳过
   const xDates = inc.map(i=>DAYS[i]);
@@ -374,7 +381,7 @@ function paintAvgBox(){
   if(state.timeKind!=='month'){ box.style.display='none'; return; }
   const rows=selKeys().map(k=>{ const st=statsForKey(k, mt.key);
     return '<div class="row"><span>'+keyName(k)+'</span><b>'+f2(st?st.mean:null)+'</b></div>'; });
-  box.innerHTML='<div class="t">'+state.month+' 月均（'+mt.name+'）</div>'+rows.join('');
+  box.innerHTML='<div class="t">'+state.month+' '+mt.name+'均值</div>'+rows.join('');
   box.style.display='block';
 }
 
@@ -470,6 +477,7 @@ function boot(){
   $('#weekToggle').onclick=()=>{ state.excludeWeekend=!state.excludeWeekend; syncToolbar(); paintAll(); };
   $('#annoBtn').onclick=()=>{ state.anno=!state.anno; syncToolbar(); paintMain(); };
   $('#printBtn').onclick=()=>window.print();
+  let rzT; window.addEventListener('resize',()=>{ clearTimeout(rzT); rzT=setTimeout(()=>paintMain(),250); });
   paintAll();
 }
 if(document.readyState==='loading'){ document.addEventListener('DOMContentLoaded',boot); } else { boot(); }
