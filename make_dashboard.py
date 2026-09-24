@@ -48,6 +48,7 @@ WH_COLORS = ["#2563eb", "#d97706", "#059669", "#7c3aed", "#db2777", "#0891b2", "
 SUMMARY_TOTAL_ROWS = ["法国汇总", "荷兰汇总", "意大利-汇总"]
 
 PERIOD_DATE_RE = re.compile(r"week\d+\((\d{4})-(\d{4})\)")
+PERIOD_WEEK_RE = re.compile(r"week(\d+)")
 
 
 def period_key(period):
@@ -59,6 +60,12 @@ def period_key(period):
     if m:
         return m.group(1), m.group(2)
     return period
+
+
+def week_no(period):
+    """Extract the week number from a label like 'week27(0713-0719)' -> 27."""
+    m = PERIOD_WEEK_RE.match(period)
+    return int(m.group(1)) if m else None
 
 
 def find_files(base_dir=BASE_DIR):
@@ -104,6 +111,12 @@ def parse_detail_sheets(xl):
     """Read the per-country detail sheets into (country, warehouse, period,
     date, type, qty, total) rows. Warehouse names are normalized to lowercase
     so spelling-case differences (e.g. 'PADOVA' vs 'padova') collapse.
+
+    Period labels are also normalized: when a row's week number disagrees with
+    the date range it is labeled under (e.g. 'week38(0831-0906)' where
+    0831-0906 is really week36), the row is remapped to that week number's own
+    date range. Without this the tie-dated labels would merge into the wrong
+    period.
     """
     records = []
     for sheet_name, cname in (("法国", "法国"), ("荷兰", "荷兰"), ("意大利", "意大利")):
@@ -113,20 +126,58 @@ def parse_detail_sheets(xl):
         for _, r in df.iterrows():
             if not isinstance(r["周期"], str):
                 continue
+            period = r["周期"].strip()
             wh = (str(r["仓库名称"]).strip() if isinstance(r["仓库名称"], str) else "")
             records.append(
                 {
                     "country": cname,
                     "wh": wh.lower(),
                     "wh_disp": wh,
-                    "period": r["周期"].strip(),
-                    "pkey": period_key(r["周期"].strip()),
+                    "period": period,
+                    "pkey": period_key(period),
+                    "week_no": week_no(period),
                     "date": pd.Timestamp(r["考勤日期"]) if pd.notna(r.get("考勤日期")) else None,
                     "etype": r["差错类型"] if isinstance(r["差错类型"], str) else None,
                     "qty": float(r["差错数量"]) if isinstance(r["差错数量"], (int, float)) else 0.0,
                     "total": float(r["考勤总数"]) if isinstance(r["考勤总数"], (int, float)) else 0.0,
                 }
             )
+
+    # Normalize mislabeled periods per country: a week number's canonical date
+    # range is the range where that week number dominates; rows carrying the
+    # same week number under a different range are remapped to the canonical one.
+    by_country = {}
+    for rec in records:
+        by_country.setdefault(rec["country"], []).append(rec)
+    for recs in by_country.values():
+        range_weeks = {}   # range -> {(week_no): count}
+        range_label = {}   # range -> most common full label
+        label_count = {}
+        for rec in recs:
+            if rec["week_no"] is None:
+                continue
+            range_weeks.setdefault(rec["pkey"], {})
+            range_weeks[rec["pkey"]][rec["week_no"]] = \
+                range_weeks[rec["pkey"]].get(rec["week_no"], 0) + 1
+            lc = label_count.setdefault(rec["pkey"], {})
+            lc[rec["period"]] = lc.get(rec["period"], 0) + 1
+        for rng, lc in label_count.items():
+            range_label[rng] = max(lc, key=lc.get)
+        # For each week number, pick the range where it is the strongest claimant.
+        week_canon = {}
+        for rng, weeks in range_weeks.items():
+            total = sum(weeks.values())
+            for wk, n in weeks.items():
+                share = n / total
+                if wk not in week_canon or share > week_canon[wk][1]:
+                    week_canon[wk] = (rng, share)
+        for rec in recs:
+            wk = rec["week_no"]
+            if wk in week_canon:
+                canon = week_canon[wk][0]
+                if rec["pkey"] != canon:
+                    rec["pkey"] = canon
+                    rec["period"] = range_label.get(canon, rec["period"])
     return records
 
 
