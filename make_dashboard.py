@@ -47,6 +47,10 @@ WH_COLORS = ["#2563eb", "#d97706", "#059669", "#7c3aed", "#db2777", "#0891b2", "
 
 SUMMARY_TOTAL_ROWS = ["法国汇总", "荷兰汇总", "意大利-汇总"]
 
+# Periods to leave out of the dashboard, keyed by date range (see period_key).
+# e.g. {("1005", "1011")} excludes week41(1005-1011).
+EXCLUDED_PERIOD_KEYS = {("1005", "1011")}
+
 PERIOD_DATE_RE = re.compile(r"week\d+\((\d{4})-(\d{4})\)")
 PERIOD_WEEK_RE = re.compile(r"week(\d+)")
 
@@ -234,6 +238,8 @@ def build_country_data(all_records, wh_roster=None):
     seen_period = {}  # (country, pkey) -> canonical period label
 
     for rec in all_records:
+        if rec["pkey"] in EXCLUDED_PERIOD_KEYS:
+            continue
         c = rec["country"]
         cnt = countries.setdefault(c, {"periods": [], "rows": {}, "wh_rows": {}, "wh_totals": {}, "total_sum": None})
         pkey = rec["pkey"]
