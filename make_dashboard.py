@@ -51,6 +51,9 @@ SUMMARY_TOTAL_ROWS = ["法国汇总", "荷兰汇总", "意大利-汇总"]
 # e.g. {("1005", "1011")} excludes week41(1005-1011).
 EXCLUDED_PERIOD_KEYS = {("1005", "1011")}
 
+# Only the most recent N periods are charted and summarised.
+MAX_PERIODS = 8
+
 PERIOD_DATE_RE = re.compile(r"week\d+\((\d{4})-(\d{4})\)")
 PERIOD_WEEK_RE = re.compile(r"week(\d+)")
 
@@ -381,8 +384,9 @@ def short_week(period):
 
 def build_html(countries, src="week27"):
 
-    def chart_section(name, data):
-        periods = data["periods"]
+    def chart_section(name, data, window):
+        # The shared recent-N window keeps every country on the same x-axis.
+        periods = list(window)
         types = list(ERROR_TYPES)  # always show all 4 error types
         period_totals = {
             p: max((row["total"] for row in data["rows"].get(p, {}).values()), default=0)
@@ -392,9 +396,14 @@ def build_html(countries, src="week27"):
         for t in types:
             pts = []
             for p in periods:
-                row = data["rows"].get(p, {}).get(t)
+                rows_this_period = data["rows"].get(p, {})
+                if not rows_this_period:
+                    # Country has no data for this period → leave a gap.
+                    pts.append(None)
+                    continue
+                row = rows_this_period.get(t)
                 if row is None:
-                    # Period has no record for this type → 0-error placeholder.
+                    # Period has data but this type had no errors → 0% point.
                     pts.append(
                         {"period": p, "rate": 0.0, "qty": 0.0, "total": period_totals.get(p, 0)}
                     )
@@ -408,38 +417,13 @@ def build_html(countries, src="week27"):
                     }
                 )
             series.append({"name": t, "points": pts, "color": ERROR_COLORS[t]})
-        # Warehouse-level series: one per warehouse from the full roster so the
-        # legend shows every warehouse even without recorded data for a period.
-        wh_names = data.get("wh_all") or sorted(set(
-            w for p in periods for w in data["wh_rows"].get(p, {}).keys()
-        ))
-        disp = data.get("wh_disp") or {}
-        wh_series = []
-        for i, wh in enumerate(wh_names):
-            pts = []
-            for p in periods:
-                row = data["wh_rows"].get(p, {}).get(wh)
-                if row is None:
-                    pts.append({"period": p, "rate": 0.0, "qty": 0.0, "total": 0})
-                    continue
-                pts.append(
-                    {
-                        "period": p,
-                        "rate": row["rate"],
-                        "qty": row["qty"],
-                        "total": row["total"],
-                    }
-                )
-            wh_series.append({"name": disp.get(wh, wh), "points": pts, "color": WH_COLORS[i % len(WH_COLORS)]})
-        # Summary text: aggregate the latest up-to-4 periods. When the summary
-        # sheet's "XX汇总" row is present it stays authoritative.
-        summ = data["total_sum"]
+        # Summary text over the displayed window (same 口径 as the chart).
         latest = periods[-1] if periods else None
-        if summ is None and latest:
-            recent = periods[-4:]
+        summ = None
+        if periods:
             tot_q = 0.0
             tot_a = 0.0
-            for p in recent:
+            for p in periods:
                 rows = data["rows"].get(p, {})
                 if not rows:
                     continue
@@ -449,23 +433,23 @@ def build_html(countries, src="week27"):
                 "total_qty": tot_q,
                 "total_att": tot_a,
                 "rate": (tot_q / tot_a) if tot_a else 0,
-                "first": short_week(recent[0]),
+                "first": short_week(periods[0]),
                 "last": short_week(latest),
+                "n": len(periods),
             }
         return {
             "name": name,
             "periods": periods,
             "series": series,
-            "wh_series": wh_series,
             "summ": summ,
             "latest": latest,
         }
 
-    charts = [chart_section(name, data) for name, data in countries.items()]
+    # Shared recent-N window across all countries (keeps x-axes aligned).
+    all_periods = sorted({p for c in countries.values() for p in c["periods"]})[-MAX_PERIODS:]
+    charts = [chart_section(name, data, all_periods) for name, data in countries.items()]
     # Combined overview across all countries: grouped bars by country (差错总量)
-    # plus per-country 差错率 lines, and a summary box for the latest period
-    # across all countries.
-    all_periods = sorted({p for c in countries.values() for p in c["periods"]})
+    # plus per-country 差错率 lines over the same recent-N window.
     combined = {
         "periods": all_periods,
         "countries": [c["name"] for c in charts],
@@ -499,9 +483,8 @@ def build_html(countries, src="week27"):
         combined["qty"].append(q)
         combined["att"].append(a)
         combined["rate"].append(q / a if a else 0)
-    # Combined summary box: aggregate the latest up-to-4 periods across all
-    # countries.
-    recent = all_periods[-4:]
+    # Combined summary box: aggregate the whole displayed window (same 口径).
+    recent = all_periods
     cq = ca = 0.0
     for p in recent:
         for data in countries.values():
@@ -515,6 +498,7 @@ def build_html(countries, src="week27"):
     combined["latest_rate"] = cq / ca if ca else 0
     combined["first"] = short_week(recent[0]) if recent else ""
     combined["last"] = short_week(all_periods[-1]) if all_periods else ""
+    combined["n"] = len(recent)
     charts_json = "var CHARTS = " + json_dumps(charts) + ";\n"
     combined_json = "var COMBINED = " + json_dumps(combined) + ";\n"
     return (
@@ -595,7 +579,7 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
 <header>
   <h1>GEU 考勤差错率趋势看板 <span style="color:var(--muted);font-weight:400;font-size:14px;">(周期 @@SOURCE@@)</span></h1>
   <div class="sub">数据来源：GEU AI考勤工具考勤纠错台账（法国 / 荷兰 / 意大利）｜按“国家”分别展示</div>
-  <div class="legend-hint">每国两图：左图按差错类型着色，右图按仓库着色 · 横轴 = 周期 · 纵轴 = 差错率(%) · 悬停数据点可查看差错数量与考勤总数</div>
+  <div class="legend-hint">仅展示最近 8 周 · 横轴 = 周期 · 纵轴 = 差错率(%) · 按差错类型着色 · 悬停数据点可查看差错数量与考勤总数</div>
 </header>
 <div class="grid" id="grid">
   <div class="card" id="card-combined">
@@ -607,8 +591,12 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
   </div>
 </div>
 <footer>
-  <b>说明：</b>“差错率”= 差错数量 ÷ 考勤总数 × 100%，数值已标注于各数据点上方；悬停数据点可查看对应周期与维度的<b>差错数量</b>与<b>考勤总数</b>。<br/>
-  左图按<b>差错类型</b>着色（签到表上传错漏 / 签到表模板/填写问题 / 工具识别错误 / 其他问题），右图按<b>仓库</b>着色。卡片右上角汇总框展示该国最近四周（不足四周按实际）的<b>差错总量 / 考勤总数 / 综合差错率</b>。数据来自两份台账（各国综合台账 + week27 台账），按日期范围去重合并。部分周期台账未记录差错数据，图中仅显示有记录的周期。
+  <b>口径说明：</b><br/>
+  1. <b>展示窗口</b>：三国统一取最近 8 个有数据周期（不足 8 周按实际），各图与汇总均以此窗口为准；某国某周无数据时折线断开、不计入汇总。<br/>
+  2. <b>单点差错率</b> = 该周期该差错类型差错数量 ÷ 该周期考勤总数 × 100%，数值标注于数据点上方。<br/>
+  3. <b>汇总框（近N周汇总）</b>：差错总量 = 窗口内各周差错数量之和；考勤总数 = 窗口内各周考勤总数之和；综合差错率 = 差错总量 ÷ 考勤总数 × 100%。顶部总览为三国合计，各卡片为该国口径。<br/>
+  4. <b>数据来源</b>：GEU 各国 AI 考勤工具考勤纠错台账（取版本最新副本为主源，旧版仅补充缺失周期，按日期范围去重）。<br/>
+  5. <b>排除周期</b>：week41(1005-1011) 按需求排除，不参与展示与汇总。
 </footer>
 <script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
 <script>
@@ -630,12 +618,9 @@ function build(c, idx) {
     '<div class="head"><div class="titles">' +
       '<span class="cn">'+esc(c.name)+'</span><span class="en">Attendance Error Rate Trend</span>' +
     '</div>' +
-    '<div class="summ"><b>'+esc(s.first||'')+'~'+esc(s.last||'')+' 汇总</b><br>差错总量: '+s.total_qty+' 笔 &nbsp;|&nbsp; 考勤总数: '+s.total_att+' 笔<br>综合差错率: <span class="rate">'+fmtPct(s.rate)+'</span></div>' +
+    '<div class="summ"><b>近'+s.n+'周汇总 · '+esc(s.first||'')+'~'+esc(s.last||'')+'</b><br>差错总量: '+s.total_qty+' 笔 &nbsp;|&nbsp; 考勤总数: '+s.total_att+' 笔<br>综合差错率: <span class="rate">'+fmtPct(s.rate)+'</span></div>' +
     '</div>' +
-    '<div class="ch-row">' +
-      '<div class="ch-box"><div class="ch-title t-type">按差错类型</div><div class="chart" id="chart-'+idx+'a"></div></div>' +
-      '<div class="ch-box"><div class="ch-title t-wh">按仓库</div><div class="chart" id="chart-'+idx+'b"></div></div>' +
-    '</div>';
+    '<div class="ch-box"><div class="ch-title t-type">按差错类型</div><div class="chart" id="chart-'+idx+'a"></div></div>';
   document.getElementById('grid').appendChild(el);
 
   function mkTrace(s, series) {
@@ -669,16 +654,15 @@ function build(c, idx) {
     hovermode:'closest'
   };
   Plotly.newPlot('chart-'+idx+'a', c.series.map(function(s){return mkTrace(c,s);}), layout, {responsive:true, displaylogo:false});
-  Plotly.newPlot('chart-'+idx+'b', c.wh_series.map(function(s){return mkTrace(c,s);}), layout, {responsive:true, displaylogo:false});
 }
 
 function buildCombined() {
   var c = COMBINED;
   var cns = c.countries;
   var col = {法国:'#2563eb', 荷兰:'#d97706', 意大利:'#059669'};
-  // Summary box: latest period across all countries.
+  // Summary box: whole displayed window across all countries.
   var s = document.getElementById('summ-combined');
-  s.innerHTML = '<b>'+esc(c.first||'')+'~'+esc(c.last||'')+' 汇总</b><br>差错总量: '+c.latest_qty+' 笔 &nbsp;|&nbsp; 考勤总数: '+c.latest_att+' 笔<br>综合差错率: <span class="rate">'+fmtPct(c.latest_rate)+'</span>';
+  s.innerHTML = '<b>近'+c.n+'周汇总 · '+esc(c.first||'')+'~'+esc(c.last||'')+'</b><br>差错总量: '+c.latest_qty+' 笔 &nbsp;|&nbsp; 考勤总数: '+c.latest_att+' 笔<br>综合差错率: <span class="rate">'+fmtPct(c.latest_rate)+'</span>';
   var traces = [];
   // Stacked bars: 差错总量 per country per period.
   cns.forEach(function(n, i) {
