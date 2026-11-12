@@ -36,7 +36,9 @@ def resolve_country(nat):
         if nat.endswith(suf) and nat[: -len(suf)] in COUNTRY_ALIASES:
             return COUNTRY_ALIASES[nat[: -len(suf)]]
     return None
-ERROR_TYPES = ["签到表上传错漏", "签到表模板/填写问题", "工具识别错误", "其他问题"]
+# Only these error types are charted. "签到表上传错漏" and "其他问题" are
+# intentionally excluded from the dashboard.
+ERROR_TYPES = ["签到表模板/填写问题", "工具识别错误"]
 ERROR_COLORS = {
     "签到表上传错漏": "#2563eb",
     "签到表模板/填写问题": "#d97706",
