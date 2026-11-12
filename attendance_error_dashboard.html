@@ -15,28 +15,28 @@
     background:var(--bg); color:var(--ink); padding:20px;
   }
   header { max-width:1200px; margin:0 auto 8px; }
-  h1 { font-size:22px; font-weight:600; }
-  .sub { color:var(--muted); font-size:13px; margin-top:4px; }
-  .legend-hint { color:var(--muted); font-size:12px; margin-top:6px; }
+  h1 { font-size:27px; font-weight:600; }
+  .sub { color:var(--muted); font-size:15px; margin-top:5px; }
+  .legend-hint { color:var(--muted); font-size:14px; margin-top:7px; }
   .grid { max-width:1200px; margin:0 auto; display:grid; grid-template-columns:1fr; gap:18px; margin-top:14px; }
   .card {
     background:var(--card); border:1px solid var(--line); border-radius:12px;
     padding:10px 8px 2px; box-shadow:0 1px 3px rgba(16,24,40,.06);
   }
   .card h2 {
-    font-size:16px; font-weight:600; padding:6px 12px 0;
+    font-size:19px; font-weight:600; padding:6px 12px 0;
     display:flex; align-items:baseline; gap:10px;
   }
   .card h2 .cn { color:var(--accent); }
-  .card h2 .en { color:var(--muted); font-size:12px; font-weight:400; }
+  .card h2 .en { color:var(--muted); font-size:14px; font-weight:400; }
   .card .head { display:flex; align-items:flex-start; justify-content:space-between; padding:6px 12px 0; }
   .card .head .titles { display:flex; align-items:baseline; gap:10px; }
-  .card .head .cn { color:var(--accent); font-size:16px; font-weight:600; }
-  .card .head .en { color:var(--muted); font-size:12px; }
+  .card .head .cn { color:var(--accent); font-size:19px; font-weight:600; }
+  .card .head .en { color:var(--muted); font-size:14px; }
   .card .summ {
-    font-size:12px; line-height:1.55; text-align:right;
+    font-size:14px; line-height:1.6; text-align:right;
     border:1px solid var(--line); border-radius:8px;
-    padding:6px 10px; background:#f8fafc; color:var(--ink);
+    padding:7px 12px; background:#f8fafc; color:var(--ink);
     white-space:nowrap;
   }
   .card .summ b { color:var(--accent); }
@@ -44,23 +44,23 @@
   .ch-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; padding:4px 8px 2px; }
   .ch-box { min-width:0; }
   .ch-title {
-    font-size:12px; color:var(--muted); font-weight:600;
+    font-size:14px; color:var(--muted); font-weight:600;
     padding:2px 4px 0; letter-spacing:.2px;
   }
   .ch-title.t-type { color:var(--accent); }
   .ch-title.t-wh { color:#d97706; }
-  .chart { width:100%; height:440px; }
-  .chart-top { height:360px; margin-top:4px; }
+  .chart { width:100%; height:460px; }
+  .chart-top { height:480px; margin-top:4px; }
   footer {
     max-width:1200px; margin:18px auto 0; color:var(--muted);
-    font-size:12px; line-height:1.7;
+    font-size:14px; line-height:1.8;
   }
   footer b { color:var(--ink); }
 </style>
 </head>
 <body>
 <header>
-  <h1>GEU 考勤差错率趋势看板 <span style="color:var(--muted);font-weight:400;font-size:14px;">(周期 multi-week)</span></h1>
+  <h1>GEU 考勤差错率趋势看板 <span style="color:var(--muted);font-weight:400;font-size:16px;">(周期 multi-week)</span></h1>
   <div class="sub">数据来源：GEU AI考勤工具考勤纠错台账（法国 / 荷兰 / 意大利）｜按“国家”分别展示</div>
   <div class="legend-hint">仅展示最近 8 周 · 横轴 = 周期 · 纵轴 = 差错率(%) · 按差错类型着色 · 悬停数据点可查看差错数量与考勤总数</div>
 </header>
@@ -120,7 +120,7 @@ function build(c, idx) {
     });
     return {
       type:'scatter', mode:'lines+markers+text', name: esc(series.name),
-      x:xs, y:ys, text:txt, textposition:'top center', textfont:{size:10},
+      x:xs, y:ys, text:txt, textposition:'top center', textfont:{size:12},
       line:{width:2.5, shape:'spline', smoothing:0.8, color:series.color},
       marker:{size:8, color:series.color, line:{width:1,color:'#fff'}},
       customdata: cd,
@@ -128,13 +128,13 @@ function build(c, idx) {
     };
   }
   var layout = {
-    margin:{l:48, r:12, t:14, b:40},
+    margin:{l:56, r:16, t:16, b:48},
     paper_bgcolor:'#fff', plot_bgcolor:'#fff',
-    font:{family:'Segoe UI, Microsoft YaHei, Arial', color:'#374151', size:11},
-    xaxis:{title:{text:'周期'}, gridcolor:'#f3f4f6', tickfont:{size:10}, automargin:true},
-    yaxis:{title:{text:'差错率(%)'}, gridcolor:'#f3f4f6', ticksuffix:'%',
-           tickformat:'.2~g', rangemode:'tozero', exponentformat:'none'},
-    legend:{orientation:'h', y:-0.28, x:0.5, xanchor:'center', font:{size:10}},
+    font:{family:'Segoe UI, Microsoft YaHei, Arial', color:'#374151', size:13},
+    xaxis:{title:{text:'周期', font:{size:13}}, gridcolor:'#f3f4f6', tickfont:{size:12}, automargin:true},
+    yaxis:{title:{text:'差错率(%)', font:{size:13}}, gridcolor:'#f3f4f6', ticksuffix:'%',
+           tickfont:{size:12}, tickformat:'.2~g', rangemode:'tozero', exponentformat:'none'},
+    legend:{orientation:'h', y:-0.30, x:0.5, xanchor:'center', font:{size:12}},
     showlegend:true,
     hovermode:'closest'
   };
@@ -157,7 +157,7 @@ function buildCombined() {
       x:c.periods, y:ys,
       marker:{color:col[n]||WH_COLORS[i%WH_COLORS.length]},
       text:ys.map(function(v){ return v>0 ? String(v) : ''; }),
-      textposition:'inside', textfont:{size:9, color:'#fff'},
+      textposition:'inside', textfont:{size:11, color:'#fff'},
       hovertemplate:'<b>'+esc(n)+'</b><br>周期: %{x}<br>差错总量: %{y} 笔<extra></extra>'
     });
   });
@@ -173,7 +173,7 @@ function buildCombined() {
       line:{width:3, shape:'spline', smoothing:0.8, color:lc},
       marker:{size:7, color:lc, line:{width:1,color:'#fff'}},
       text:ys.map(function(r){ return r==null ? '' : fmtPct(r); }),
-      textposition:'top center', textfont:{size:9, color:'#6b7280'},
+      textposition:'top center', textfont:{size:11, color:'#6b7280'},
       customdata:ys.map(function(r,i2){
         return r==null ? null : [fmtPct(r), c.by_country[n][i2], c.att[i2]];
       }),
@@ -181,15 +181,16 @@ function buildCombined() {
     });
   });
   var layout = {
-    margin:{l:48, r:44, t:14, b:40},
+    margin:{l:56, r:56, t:16, b:48},
     paper_bgcolor:'#fff', plot_bgcolor:'#fff',
-    font:{family:'Segoe UI, Microsoft YaHei, Arial', color:'#374151', size:11},
-    xaxis:{title:{text:'周期'}, gridcolor:'#f3f4f6', tickfont:{size:10}, automargin:true},
-    yaxis:{title:{text:'差错总量(笔)'}, gridcolor:'#f3f4f6', rangemode:'tozero'},
-    yaxis2:{title:{text:'差错率(%)'}, overlaying:'y', side:'right', ticksuffix:'%',
-            tickformat:'.2~g', rangemode:'tozero', gridcolor:'rgba(0,0,0,0)'},
+    font:{family:'Segoe UI, Microsoft YaHei, Arial', color:'#374151', size:13},
+    xaxis:{title:{text:'周期', font:{size:13}}, gridcolor:'#f3f4f6', tickfont:{size:12}, automargin:true},
+    yaxis:{title:{text:'差错总量(笔)', font:{size:13}}, gridcolor:'#f3f4f6', rangemode:'tozero', tickfont:{size:12}},
+    yaxis2:{title:{text:'差错率(%)', font:{size:13}}, overlaying:'y', side:'right', ticksuffix:'%',
+            tickformat:'.2~g', rangemode:'tozero', tickfont:{size:12}, gridcolor:'rgba(0,0,0,0)'},
     barmode:'stack',
-    legend:{orientation:'h', y:-0.28, x:0.5, xanchor:'center', font:{size:10}},
+    bargap:0.55,
+    legend:{orientation:'h', y:-0.30, x:0.5, xanchor:'center', font:{size:12}},
     hovermode:'closest'
   };
   Plotly.newPlot('chart-combined', traces, layout, {responsive:true, displaylogo:false});
