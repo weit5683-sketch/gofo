@@ -80,10 +80,11 @@ def week_no(period):
 def find_files(base_dir=BASE_DIR):
     """Return (consolidated_ledger, [other_ledgers]) workbooks.
 
-    The newest "各国" workbook (highest version number, e.g. (4) > (3)(1) > (3)
-    > (1) > base name) is the authoritative consolidated ledger. All older
-    "各国" copies and any week27 files are returned as supplements; overlapping
-    periods are skipped by the caller so only genuinely missing data is added.
+    The newest "各国" workbook is the authoritative consolidated ledger. "Newest"
+    is decided by file modification time (users often re-save an older-numbered
+    copy), with the "(N)" version number as tie-breaker. All older "各国" copies
+    and any week27 files are returned as supplements; overlapping periods are
+    skipped by the caller so only genuinely missing data is added.
     """
     cons = glob.glob(os.path.join(base_dir, "*各国*.xlsx"))
     others = glob.glob(os.path.join(base_dir, "*week27*.xlsx"))
@@ -106,8 +107,17 @@ def find_files(base_dir=BASE_DIR):
         return (tuple(nums), len(nums))
 
     is_ge = [item for item in results if "各国" in os.path.basename(item[0])]
-    # Newest "各国" workbook is the primary source.
-    is_ge.sort(key=lambda item: version_key(item[0]), reverse=True)
+    # Newest "各国" workbook is the primary source. Modification time wins
+    # (users often edit and re-save an older "(N)" copy, so the highest "(N)"
+    # is not reliably the newest); the version key only breaks ties.
+    def recency_key(item):
+        try:
+            mtime = os.path.getmtime(item[0])
+        except OSError:
+            mtime = 0.0
+        return (mtime, version_key(item[0]))
+
+    is_ge.sort(key=recency_key, reverse=True)
     primary, *rest = is_ge
     others_xls = [xl for _, xl in rest]
     for p, xl in results:
